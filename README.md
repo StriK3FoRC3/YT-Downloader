@@ -140,4 +140,5 @@ YT Downloader is not affiliated with YouTube, Google, yt-dlp, FFmpeg, Deno, or G
 
 ## License
 
-No license has been selected for the YT Downloader source code. The bundled third-party programs retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Image Converter is available under the [PolyForm Noncommercial License 1.0.0](LICENSE) You may use, modify, and distribute it for permitted noncommercial purposes. Commercial use is not granted by this license.
+The bundled third-party programs retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
