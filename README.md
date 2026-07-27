@@ -6,16 +6,13 @@ A portable Windows desktop application for downloading YouTube videos, audio, an
 
 ## Features
 
-- Download individual YouTube videos, audio, or complete playlists.
-- Choose between audio-only and video downloads.
-- Download 1 to 5 items at once; 2 at once is the default.
-- Follow combined progress, current transfer speed in MB/s, and elapsed time.
-- Cancel an active job, remove its unfinished files, and reset the progress bar.
-- Keep the currently downloading item at the top of the activity list.
-- Copy a source URL by clicking it in the Activity or Failed downloads list.
-- Reject active and upcoming YouTube livestreams instead of trying to record them.
-- Automatically preserve duplicate downloads by adding numbered suffixes such as `Song (2).mp3`.
-- Use a dark Windows interface with saved format choices, profile selection, and resizable activity columns.
+- **Completely portable:** the executable, dependencies, settings, logs, cache, and downloads stay inside the YT Downloader folder. No installer is required.
+- **Playlist downloads:** download individual YouTube links or complete playlists.
+- **Smart audio downloads:** Automatic Audio Bitrate checks the source stream and avoids unnecessary re-encoding when possible. Available formats are MP3, M4A, FLAC, WAV, OGG, OPUS, and AAC.
+- **Video downloads up to 8K:** choose MP4, MKV, or WEBM with resolutions up to 4320p, or use Highest to select the best available quality.
+- **Up to 5 downloads at once:** choose between 1 and 5 parallel downloads, with 2 selected by default.
+- **Download Profile Creator:** save cookie source, automatic or fixed audio bitrate, thumbnail embedding, metadata fields, title cleanup, artist-prefix removal, and custom bracketed title tags in reusable profiles.
+- **Component update checker:** the Check For Updates button checks and updates yt-dlp, Deno, FFmpeg, and ffprobe. FFmpeg downloads are verified against the publisher's SHA-256 checksum; YT Downloader itself is not changed.
 
 ## Formats and quality
 
