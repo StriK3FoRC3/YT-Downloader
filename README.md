@@ -1,8 +1,6 @@
 # YT Downloader
 
-A portable Windows desktop application for downloading YouTube videos, audio, and playlists with control over format, quality, metadata, title cleanup, and parallel downloads.
-
-> **Current repository status:** documentation only. The application, source code, binaries, and bundled dependencies have not been uploaded yet.
+A completely portable Windows application for downloading YouTube videos, audio, and playlists with control over quality, metadata, title cleanup, and parallel downloads.
 
 ## Features
 
@@ -13,6 +11,12 @@ A portable Windows desktop application for downloading YouTube videos, audio, an
 - **Up to 5 downloads at once:** choose between 1 and 5 parallel downloads, with 2 selected by default.
 - **Download Profile Creator:** save cookie source, automatic or fixed audio bitrate, thumbnail embedding, metadata fields, title cleanup, artist-prefix removal, and custom bracketed title tags in reusable profiles.
 - **Component update checker:** the Check For Updates button checks and updates yt-dlp, Deno, FFmpeg, and ffprobe. FFmpeg downloads are verified against the publisher's SHA-256 checksum; YT Downloader itself is not changed.
+
+## Download
+
+Download the latest portable ZIP from [Releases](https://github.com/StriK3FoRC3/YT-Downloader/releases/latest), extract the complete folder, and run `YTDownloader.exe`.
+
+Keep `YTDownloader.exe`, `Dependencies`, and `Downloads` together. Moving only the executable will leave the required tools behind.
 
 ## Formats and quality
 
@@ -51,43 +55,19 @@ Default selections are **MP3** for audio, **MP4** for video, **Highest** resolut
 
 A fixed bitrate forces lossy conversion. Choosing a bitrate higher than the source may increase file size without improving the real audio quality.
 
-## Profiles and download options
+## Download profiles
 
-Profiles save the complete set of download options, including:
+Profiles store the cookie source, automatic or fixed audio bitrate, thumbnail embedding, metadata choices, and title-cleanup settings. The selected profile can be changed from the main window or the Profile Creator in Settings.
 
-- Cookie source.
-- Automatic or fixed audio bitrate.
-- Thumbnail embedding.
-- Title cleanup settings.
-- Individual metadata fields.
+Title cleanup can remove common bracketed labels, user-defined custom bracketed tags, and an artist prefix so `Bruno Mars - The Lazy Song` becomes `The Lazy Song`.
 
-The **Default** profile starts with title cleanup, thumbnails, and metadata disabled. Cookie selection remains set to **Automatic**. New profiles also start with optional processing disabled.
+Metadata has a master switch and individual choices for title, artist/uploader, album/series, date, description, source URL, genre, track/disc information, and chapters.
 
-### Title cleanup
-
-Title cleanup can:
-
-- Remove common bracketed labels such as `Official Video`, `Lyrics`, or `Audio`.
-- Remove user-defined bracketed tags.
-- Remove an artist prefix so `Bruno Mars - The Lazy Song` becomes `The Lazy Song`.
-
-### Metadata
-
-Metadata has a master switch and individual choices for:
-
-- Title
-- Artist / uploader
-- Album / series
-- Date
-- Description
-- Source URL
-- Genre
-- Track and disc information
-- Chapters
+The **Default** profile starts with title cleanup, thumbnails, and metadata disabled. Cookie selection remains set to **Automatic**.
 
 ## Cookies and privacy
 
-The app can ask yt-dlp to read cookies locally from **Automatic**, Firefox, Chrome, Edge, Brave, Opera, Vivaldi, or Chromium. Cookie use can also be disabled, although some YouTube downloads may then fail.
+The app can ask yt-dlp to read cookies locally from Automatic, Firefox, Chrome, Edge, Brave, Opera, Vivaldi, or Chromium. Cookie use can also be disabled, although some YouTube downloads may then fail.
 
 The app itself does not read, store, upload, or write cookie values to its log. Relevant cookies are used by yt-dlp only in authenticated requests to YouTube/Google; they are not sent to the app developer or unrelated services.
 
@@ -95,17 +75,7 @@ YouTube can associate authenticated downloads with the signed-in account. yt-dlp
 
 See the [official yt-dlp cookie and account warning](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies).
 
-## Activity, failures, and diagnostics
-
-- Activity and failed-download tabs keep the title, type, status, and source link for each item.
-- Failed entries remain available as clickable source links in the app.
-- Each run with failures creates `FailedDL_YYYY-MM-DD_HH-MM-SS.txt` in the `Dependencies` folder.
-- Detailed downloader output, component-update results, exit codes, and errors are written to `Dependencies\YTD.log`.
-- Browser cookie contents are never written to the log.
-
 ## Portable folder layout
-
-YT Downloader is designed to keep its files together:
 
 ```text
 YT Downloader/
@@ -121,9 +91,9 @@ YT Downloader/
 └── Downloads/
 ```
 
-`settings.ini` stores preferences, profiles, toggles, selected formats, concurrency, and activity-column layout. Downloads are always saved in the portable `Downloads` folder. The application does not intentionally store its own settings in AppData.
+`settings.ini` stores preferences, profiles, toggles, selected formats, concurrency, and activity-column layout. Failed downloads are written to timestamped `FailedDL_*.txt` files and detailed diagnostics go to `YTD.log`.
 
-Deno may create `Dependencies\DenoCache` while solving YouTube JavaScript challenges. The folder is kept inside the portable application directory.
+Deno may create `Dependencies\DenoCache` while solving YouTube JavaScript challenges. All of these files remain inside the portable application directory.
 
 ## Components
 
@@ -135,20 +105,20 @@ Deno may create `Dependencies\DenoCache` while solving YouTube JavaScript challe
 | [Deno](https://deno.com/) | JavaScript runtime used by yt-dlp for YouTube challenge solving |
 | .NET Framework / Windows Forms | Native Windows desktop interface |
 
-## Component updates
+The Check For Updates button checks components only when pressed. yt-dlp and Deno use their official update mechanisms. FFmpeg and ffprobe are replaced together with the latest stable [Gyan Windows build](https://www.gyan.dev/ffmpeg/builds/) after its published SHA-256 checksum is verified.
 
-The **Check For Updates** button checks components only when pressed:
+Third-party component versions and redistribution information are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-- yt-dlp and Deno use their official update mechanisms.
-- FFmpeg and ffprobe are replaced together with the newest stable Windows build from [Gyan](https://www.gyan.dev/ffmpeg/builds/), after its published SHA-256 checksum is verified.
-- Temporary updater files are cleaned after a successful update.
-- The button does not update YT Downloader itself.
+## Build from source
 
-When nothing needs changing, the app reports: `Component Check: All Up To Date.`
+Requirements:
 
-## Build
+- Windows with the .NET Framework 4.x C# compiler.
+- `yt-dlp.exe`, `ffmpeg.exe`, `ffprobe.exe`, and `deno.exe` placed in the repository root when creating a complete portable build.
 
-The application is written in C# using Windows Forms and is built as a portable Windows executable. Build instructions will be added when the source code is published.
+Run `build.bat`. The optimized executable and portable folder structure are created under `build`.
+
+The build treats all compiler warnings as errors. Local builds, downloaded dependencies, settings, logs, caches, downloads, and release archives are excluded by `.gitignore`.
 
 ## Responsible use
 
@@ -158,4 +128,4 @@ YT Downloader is not affiliated with YouTube, Google, yt-dlp, FFmpeg, Deno, or G
 
 ## License
 
-No project license has been selected yet.
+No license has been selected for the YT Downloader source code. The bundled third-party programs retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

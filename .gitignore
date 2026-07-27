@@ -1,0 +1,32 @@
+# Local builds and release staging
+/build/
+/release/
+/*.zip
+
+# Downloaded third-party executables used by build.bat
+/yt-dlp.exe
+/ffmpeg.exe
+/ffprobe.exe
+/ffplay.exe
+/deno.exe
+
+# Legacy batch-download files (not used by the application)
+/Start YT DLP.bat
+/yt-dlp.conf
+
+# Portable runtime data
+/Dependencies/
+/Downloads/
+settings.ini
+YTD.log
+FailedDL_*.txt
+DenoCache/
+*.old.exe
+*.tmp
+
+# Editor and operating-system files
+.vs/
+.vscode/
+*.user
+Thumbs.db
+Desktop.ini
