@@ -1,7 +1,7 @@
 <div align="center">
     <img src="/Screenshot1.png" width="500px"</img> 
 </div>
-________________________________________________
+     
 
 <div align="center">
     <img src="/Screenshot2.png" width="500px"</img> 
