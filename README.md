@@ -1,3 +1,12 @@
+<div align="center">
+    <img src="/screenshot2.png" width="500px"</img> 
+</div>
+<div align="center">
+    <img src="/screenshot1.png" width="500px"</img> 
+</div>
+
+
+
 # YT Downloader
 
 A completely portable Windows application for downloading YouTube videos, audio, and playlists with control over quality, metadata, title cleanup, and parallel downloads.
