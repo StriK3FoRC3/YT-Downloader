@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.strik3forc3.ytdownloader.core.AudioFormat
 import com.strik3forc3.ytdownloader.core.BitrateLadder
+import com.strik3forc3.ytdownloader.core.BitrateSetting
 import com.strik3forc3.ytdownloader.core.DownloadMode
 import com.strik3forc3.ytdownloader.core.ItemProgress
 import com.strik3forc3.ytdownloader.core.Profile
@@ -80,6 +81,31 @@ data class HomeUiState(
     val willTranscode: Boolean
         get() = settings.mode == DownloadMode.AUDIO &&
             BitrateLadder.willTranscode(settings.audioFormat, null, activeProfile.bitrate)
+
+    /**
+     * Why the current audio choice re-encodes, and what to pick instead.
+     *
+     * The earlier wording only mentioned speed and battery. Quality is what people
+     * actually notice: YouTube never serves MP3, so choosing it always means decoding
+     * YouTube's Opus and re-encoding it — a second generation of lossy compression that
+     * no bitrate setting can undo. M4A and OPUS copy the original stream untouched.
+     */
+    val transcodeWarning: String?
+        get() = when {
+            !willTranscode -> null
+            settings.audioFormat == AudioFormat.MP3 ->
+                "MP3 re-encodes: YouTube never serves it, so quality drops. " +
+                    "Pick M4A or OPUS to copy the original audio untouched."
+            settings.audioFormat.isLossless ->
+                "${settings.audioFormat.name} cannot recover quality YouTube already " +
+                    "discarded — it just makes a much larger file."
+            activeProfile.bitrate !is BitrateSetting.Automatic ->
+                "A fixed bitrate forces a re-encode. Automatic copies the original " +
+                    "stream when it can."
+            else ->
+                "${settings.audioFormat.name} re-encodes here: quality drops and it " +
+                    "takes longer."
+        }
 }
 
 @HiltViewModel

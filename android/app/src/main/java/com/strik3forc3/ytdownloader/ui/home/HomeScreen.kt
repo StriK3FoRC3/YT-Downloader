@@ -462,14 +462,18 @@ private fun OptionsCard(
         // A warning the Windows app never shows: on a phone this is the difference
         // between a stream copy and a sustained FFmpeg load.
         AnimatedVisibility(
-            visible = state.willTranscode,
+            visible = state.transcodeWarning != null,
             enter = fadeIn(Motion.medium()) + expandVertically(Motion.medium()),
             exit = fadeOut(Motion.fast()) + shrinkVertically(Motion.medium()),
         ) {
-            Chip(
-                text = "This format will re-encode — slower and heavier on battery",
+            Text(
+                text = state.transcodeWarning.orEmpty(),
+                style = MaterialTheme.typography.labelMedium,
                 color = YtdlColors.Warning,
-                container = YtdlColors.SurfaceRaised,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(YtdlColors.SurfaceRaised, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
             )
         }
     }

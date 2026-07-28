@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.material3.Text
@@ -140,22 +144,38 @@ fun QueueRow(
             }
         }
 
-        if (phase == DownloadPhase.DOWNLOADING && progress != null) {
-            Column(
-                Modifier.width(74.dp),
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    Format.percent(progress.fraction),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = YtdlColors.TextPrimary,
-                )
-                Text(
-                    Format.speed(progress.speedBytesPerSecond),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = YtdlColors.TextMuted,
-                )
+        when {
+            phase == DownloadPhase.DOWNLOADING && progress != null -> {
+                Column(
+                    Modifier.width(74.dp),
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(
+                        Format.percent(progress.fraction),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = YtdlColors.TextPrimary,
+                    )
+                    Text(
+                        Format.speed(progress.speedBytesPerSecond),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = YtdlColors.TextMuted,
+                    )
+                }
+            }
+
+            // An explicit control rather than relying on the row tap alone. The row sits
+            // inside a swipe container that can swallow a tap, and a "tap to open" hint in
+            // the status line is the first thing to be truncated away by a long filename —
+            // so the affordance was both unreliable and invisible.
+            onClick != null -> {
+                IconButton(onClick = onClick) {
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = "Open ${item.outputName ?: "file"}",
+                        tint = YtdlColors.Success,
+                    )
+                }
             }
         }
     }
@@ -179,7 +199,7 @@ private fun QueueItemEntity.formatLabel(): String = when (mode) {
 private fun QueueItemEntity.statusLine(progress: ItemProgress?): String = when {
     status == ItemStatus.FAILED -> "Failed"
     status == ItemStatus.CANCELLED -> "Cancelled"
-    status == ItemStatus.DONE -> outputName?.let { "$it · tap to open" } ?: "Finished"
+    status == ItemStatus.DONE -> outputName ?: "Finished"
     progress?.phase == DownloadPhase.EXTRACTING -> "Reading link…"
     // Naming the post-processor tells the user *why* the bar has stopped moving.
     progress?.phase == DownloadPhase.PROCESSING ->
