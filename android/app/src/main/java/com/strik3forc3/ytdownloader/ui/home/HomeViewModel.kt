@@ -201,14 +201,17 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             shareInbox.pending.filterNotNull().collect {
                 val text = shareInbox.consume() ?: return@collect
-                val links = SharedText.toQueueInput(text)
-                if (links.isBlank()) {
+
+                if (SharedText.extractLinks(text).isEmpty()) {
                     _message.value = "That share did not contain a link."
                     return@collect
                 }
 
-                val existing = _urlInput.value.trimEnd()
-                _urlInput.value = if (existing.isEmpty()) links else existing + "\n" + links
+                val merge = SharedText.appendTo(_urlInput.value, text)
+                _urlInput.value = merge.text
+                if (merge.addedCount == 0) {
+                    _message.value = "That video is already in the box."
+                }
             }
         }
     }

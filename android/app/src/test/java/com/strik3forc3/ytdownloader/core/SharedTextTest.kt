@@ -56,6 +56,62 @@ class SharedTextTest {
     }
 
     @Test
+    fun `sharing into an empty box just fills it`() {
+        val merge = SharedText.appendTo("", "https://youtu.be/aaaaaaaaaaa")
+        assertThat(merge.text).isEqualTo("https://youtu.be/aaaaaaaaaaa")
+        assertThat(merge.addedCount).isEqualTo(1)
+    }
+
+    @Test
+    fun `a second share appends on a new line`() {
+        // The point of prefilling rather than queueing: collect several videos, then
+        // choose audio or video once.
+        val merge = SharedText.appendTo(
+            "https://youtu.be/aaaaaaaaaaa",
+            "Title\n\nhttps://youtu.be/bbbbbbbbbbb",
+        )
+        assertThat(merge.text.lines())
+            .containsExactly("https://youtu.be/aaaaaaaaaaa", "https://youtu.be/bbbbbbbbbbb")
+            .inOrder()
+        assertThat(merge.addedCount).isEqualTo(1)
+    }
+
+    @Test
+    fun `sharing the same video twice does not duplicate the line`() {
+        val merge = SharedText.appendTo(
+            "https://youtu.be/aaaaaaaaaaa",
+            "https://youtu.be/aaaaaaaaaaa?si=different",
+        )
+        assertThat(merge.text).isEqualTo("https://youtu.be/aaaaaaaaaaa")
+        assertThat(merge.addedCount).isEqualTo(0)
+    }
+
+    @Test
+    fun `a share adds only the videos not already present`() {
+        val merge = SharedText.appendTo(
+            "https://youtu.be/aaaaaaaaaaa",
+            "https://youtu.be/aaaaaaaaaaa and https://youtu.be/bbbbbbbbbbb",
+        )
+        assertThat(merge.text.lines()).hasSize(2)
+        assertThat(merge.addedCount).isEqualTo(1)
+    }
+
+    @Test
+    fun `half-typed text in the box is preserved`() {
+        // Rewriting the box to canonical links would destroy whatever is being typed.
+        val partial = "https://youtu.be/aaaaaaaaaaa\nhttps://youtu.b"
+        val merge = SharedText.appendTo(partial, "https://youtu.be/bbbbbbbbbbb")
+        assertThat(merge.text).startsWith(partial)
+        assertThat(merge.text.lines().last()).isEqualTo("https://youtu.be/bbbbbbbbbbb")
+    }
+
+    @Test
+    fun `trailing whitespace does not create a blank line`() {
+        val merge = SharedText.appendTo("https://youtu.be/aaaaaaaaaaa\n\n  ", "https://youtu.be/bbbbbbbbbbb")
+        assertThat(merge.text.lines()).hasSize(2)
+    }
+
+    @Test
     fun `queue input is one link per line and parses back`() {
         val shared = "Title\n\nhttps://youtu.be/aaaaaaaaaaa\nhttps://youtu.be/bbbbbbbbbbb"
         val input = SharedText.toQueueInput(shared)

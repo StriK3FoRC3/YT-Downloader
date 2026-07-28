@@ -35,4 +35,33 @@ object SharedText {
      * Formats extracted links for the queue's text input, which is one link per line.
      */
     fun toQueueInput(text: String?): String = extractLinks(text).joinToString("\n")
+
+    /** The outcome of merging a share into whatever is already in the link box. */
+    data class Merge(val text: String, val addedCount: Int)
+
+    /**
+     * Appends a share's links to the current box contents, skipping any video already
+     * there.
+     *
+     * [existing] is preserved verbatim rather than rewritten, because it may hold a
+     * half-typed line the user is still working on — collapsing the whole box to
+     * canonical links would silently destroy it. Only genuinely new links are added.
+     */
+    fun appendTo(existing: String, shared: String?): Merge {
+        val alreadyPresent = QueueParser.normaliseInput(existing)
+            .mapTo(HashSet()) { YouTubeUrl.canonicalKey(it) }
+
+        val fresh = extractLinks(shared)
+            .filter { YouTubeUrl.canonicalKey(it) !in alreadyPresent }
+
+        if (fresh.isEmpty()) return Merge(existing, 0)
+
+        val trimmed = existing.trimEnd()
+        val merged = if (trimmed.isEmpty()) {
+            fresh.joinToString("\n")
+        } else {
+            trimmed + "\n" + fresh.joinToString("\n")
+        }
+        return Merge(merged, fresh.size)
+    }
 }
