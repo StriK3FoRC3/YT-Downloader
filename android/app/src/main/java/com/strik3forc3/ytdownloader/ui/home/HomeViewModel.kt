@@ -10,11 +10,13 @@ import com.strik3forc3.ytdownloader.core.ItemProgress
 import com.strik3forc3.ytdownloader.core.Profile
 import com.strik3forc3.ytdownloader.core.QueueParser
 import com.strik3forc3.ytdownloader.core.Resolution
+import com.strik3forc3.ytdownloader.core.SharedText
 import com.strik3forc3.ytdownloader.core.VideoFormat
 import com.strik3forc3.ytdownloader.core.YtDlpVersion
 import com.strik3forc3.ytdownloader.data.ProfileRepository
 import com.strik3forc3.ytdownloader.data.Settings
 import com.strik3forc3.ytdownloader.data.SettingsRepository
+import com.strik3forc3.ytdownloader.data.ShareInbox
 import com.strik3forc3.ytdownloader.data.db.ItemStatus
 import com.strik3forc3.ytdownloader.data.db.QueueItemEntity
 import com.strik3forc3.ytdownloader.work.DownloadQueue
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -86,6 +89,7 @@ class HomeViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val profileRepository: ProfileRepository,
     private val engine: YtDlpEngine,
+    private val shareInbox: ShareInbox,
 ) : ViewModel() {
 
     private data class LocalState(
@@ -124,6 +128,7 @@ class HomeViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
     init {
+        observeSharedLinks()
         viewModelScope.launch {
             // Unpacking Python takes seconds on first run, so it happens behind a visible
             // setup state rather than blocking application startup.
@@ -181,6 +186,29 @@ class HomeViewModel @Inject constructor(
                 YtDlpEngine.UpdateResult.UPDATED -> "yt-dlp updated."
                 YtDlpEngine.UpdateResult.ALREADY_CURRENT -> "yt-dlp is already current."
                 YtDlpEngine.UpdateResult.FAILED -> "Update failed. Check the connection."
+            }
+        }
+    }
+
+    /**
+     * Puts links from the share sheet into the link box rather than queueing them.
+     *
+     * A shared video is usually the moment you decide whether you want audio or video, so
+     * the format, resolution and profile pickers have to come *before* it is committed.
+     * Successive shares append, so several videos can be collected and configured once.
+     */
+    private fun observeSharedLinks() {
+        viewModelScope.launch {
+            shareInbox.pending.filterNotNull().collect {
+                val text = shareInbox.consume() ?: return@collect
+                val links = SharedText.toQueueInput(text)
+                if (links.isBlank()) {
+                    _message.value = "That share did not contain a link."
+                    return@collect
+                }
+
+                val existing = _urlInput.value.trimEnd()
+                _urlInput.value = if (existing.isEmpty()) links else existing + "\n" + links
             }
         }
     }

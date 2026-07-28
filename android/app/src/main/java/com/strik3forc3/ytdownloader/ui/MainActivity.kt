@@ -1,6 +1,7 @@
 package com.strik3forc3.ytdownloader.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -16,14 +17,18 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.strik3forc3.ytdownloader.data.ShareInbox
 import com.strik3forc3.ytdownloader.ui.home.HomeScreen
 import com.strik3forc3.ytdownloader.ui.settings.SettingsScreen
 import com.strik3forc3.ytdownloader.ui.theme.Motion
 import com.strik3forc3.ytdownloader.ui.theme.YtDownloaderTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject lateinit var shareInbox: ShareInbox
 
     /**
      * Android 13+ withholds notifications until asked. Without the grant the download
@@ -43,11 +48,31 @@ class MainActivity : ComponentActivity() {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
 
+        captureShare(intent)
+
         setContent {
             YtDownloaderTheme {
                 YtDownloaderApp()
             }
         }
+    }
+
+    /**
+     * The activity is `singleTask`, so a share arriving while it is already running is
+     * delivered here rather than through a new `onCreate`. Without this, sharing a second
+     * video would silently do nothing.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        captureShare(intent)
+    }
+
+    private fun captureShare(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_SEND) return
+        // EXTRA_TEXT carries the link; EXTRA_SUBJECT is usually the video title, which is
+        // of no use here since yt-dlp resolves the real title itself.
+        shareInbox.offer(intent.getStringExtra(Intent.EXTRA_TEXT))
     }
 }
 

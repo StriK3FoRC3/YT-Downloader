@@ -16,6 +16,13 @@ passthrough, download profiles, and yt-dlp self-update.
 | `work/` | `DownloadQueue` (bounded-concurrency scheduler) and `DownloadService` (foreground). |
 | `ui/` | Compose screens, theme, motion, `components/`. |
 
+### Share sheet
+
+A shared link **fills the link box; it does not queue anything.** A shared video is
+usually the moment the user decides whether they want audio or video, so the format,
+resolution and profile pickers have to come before the commit. Successive shares append
+a line, so several videos can be collected and configured in one go.
+
 ### Cookie providers
 
 `WebViewCookieProvider` is the working path and must stay standalone.
