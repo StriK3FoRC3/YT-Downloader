@@ -95,6 +95,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun dismissMessage() {
+        local.value = local.value.copy(message = null)
+    }
+
     fun refreshCookieState() {
         viewModelScope.launch {
             local.value = local.value.copy(signedIn = cookies.cookieFile() != null)

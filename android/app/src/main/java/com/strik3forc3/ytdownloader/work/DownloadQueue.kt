@@ -7,6 +7,7 @@ import com.strik3forc3.ytdownloader.core.DownloadPhase
 import com.strik3forc3.ytdownloader.core.DownloadRequest
 import com.strik3forc3.ytdownloader.core.ItemProgress
 import com.strik3forc3.ytdownloader.core.QueueParser
+import com.strik3forc3.ytdownloader.core.SpeedSmoother
 import com.strik3forc3.ytdownloader.core.YouTubeUrl
 import com.strik3forc3.ytdownloader.data.ProfileRepository
 import com.strik3forc3.ytdownloader.data.Settings
@@ -50,12 +51,16 @@ data class SessionState(
     val failed: Int = 0,
     val active: Map<String, ItemProgress> = emptyMap(),
     val elapsedMillis: Long = 0,
+    /** Already smoothed; see [combinedSpeedBytesPerSecond]. */
+    val smoothedSpeedBytesPerSecond: Double = 0.0,
 ) {
-    /** Combined transfer rate across everything currently downloading. */
+    /**
+     * Combined transfer rate across everything currently downloading, smoothed and
+     * quantised to the precision the UI renders — so the readout changes only when it
+     * would actually look different.
+     */
     val combinedSpeedBytesPerSecond: Double
-        get() = active.values
-            .filter { it.phase == DownloadPhase.DOWNLOADING }
-            .sumOf { it.speedBytesPerSecond }
+        get() = smoothedSpeedBytesPerSecond
 
     val overallFraction: Float
         get() = if (total == 0) 0f else {
@@ -86,6 +91,9 @@ class DownloadQueue @Inject constructor(
 
     /** Serialises position allocation and dedup checks across concurrent enumerations. */
     private val commitMutex = Mutex()
+
+    /** yt-dlp's per-chunk rate is far too noisy to render directly. */
+    private val speedSmoother = SpeedSmoother()
 
     private val _state = MutableStateFlow(SessionState())
     val state: StateFlow<SessionState> = _state.asStateFlow()
@@ -245,6 +253,7 @@ class DownloadQueue @Inject constructor(
         pending: List<QueueItemEntity>,
     ) {
         val startedAt = System.currentTimeMillis()
+        speedSmoother.reset()
         _state.value = SessionState(running = true, total = pending.size)
 
         val cookieFile = cookies.forMode(current.cookieMode).cookieFile()
@@ -334,10 +343,16 @@ class DownloadQueue @Inject constructor(
      * per frame instead.
      */
     private fun publish(itemId: String, progress: ItemProgress, startedAt: Long) {
-        _state.update {
-            it.copy(
-                active = it.active + (itemId to progress),
+        _state.update { current ->
+            val active = current.active + (itemId to progress)
+            val raw = active.values
+                .filter { it.phase == DownloadPhase.DOWNLOADING }
+                .sumOf { it.speedBytesPerSecond }
+
+            current.copy(
+                active = active,
                 elapsedMillis = System.currentTimeMillis() - startedAt,
+                smoothedSpeedBytesPerSecond = SpeedSmoother.quantise(speedSmoother.update(raw)),
             )
         }
     }

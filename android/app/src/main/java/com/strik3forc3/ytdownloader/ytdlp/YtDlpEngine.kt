@@ -27,6 +27,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
@@ -50,6 +51,11 @@ class YtDlpEngine @Inject constructor(
     sealed interface Result {
         data object Success : Result
         data class Failure(val message: String) : Result
+    }
+
+    private companion object {
+        /** GitHub fetch plus unpack. Generous, but finite. */
+        const val UPDATE_TIMEOUT_MS = 90_000L
     }
 
     private val initMutex = Mutex()
@@ -199,11 +205,20 @@ class YtDlpEngine @Inject constructor(
      */
     enum class UpdateResult { UPDATED, ALREADY_CURRENT, FAILED }
 
-    /** yt-dlp is updatable because it is a Python payload rather than an exec'd binary. */
+    /**
+     * yt-dlp is updatable because it is a Python payload rather than an exec'd binary.
+     *
+     * Bounded by a timeout: `updateYoutubeDL` fetches from GitHub with no deadline of its
+     * own, so a stalled connection — captive portal, flaky mobile data, GitHub
+     * unreachable — leaves it blocked forever with the caller stuck showing "Updating…"
+     * and no way back.
+     */
     suspend fun updateYtDlp(): UpdateResult = withContext(Dispatchers.IO) {
         ensureInitialised()
         runCatching {
-            YoutubeDL.getInstance().updateYoutubeDL(context, YoutubeDL.UpdateChannel.STABLE)
+            withTimeout(UPDATE_TIMEOUT_MS) {
+                YoutubeDL.getInstance().updateYoutubeDL(context, YoutubeDL.UpdateChannel.STABLE)
+            }
         }.fold(
             onSuccess = { status ->
                 when (status) {
@@ -212,8 +227,11 @@ class YtDlpEngine @Inject constructor(
                     else -> UpdateResult.FAILED
                 }
             },
-            onFailure = {
-                logger.error("yt-dlp update failed", it)
+            onFailure = { error ->
+                // A timeout arrives here as TimeoutCancellationException, which must not
+                // be rethrown as ordinary cancellation — the caller needs a result so its
+                // busy state clears.
+                logger.error("yt-dlp update failed", error)
                 UpdateResult.FAILED
             },
         )
