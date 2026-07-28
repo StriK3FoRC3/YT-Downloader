@@ -23,6 +23,9 @@ transcoding itself.
 | `android/` | Android app |
 | `README.md`, `THIRD_PARTY_NOTICES.md` | Repo-wide, user-facing |
 
+The Android app is the active surface; `src/` is stable and should not be edited as a side
+effect of Android work.
+
 ## Local Contracts
 
 - **`docs/download-rules.md` is the single source of truth for download behaviour.**

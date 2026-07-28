@@ -30,6 +30,22 @@ Download the latest portable ZIP from [Releases](https://github.com/StriK3FoRC3/
 
 Keep `YTDownloader.exe`, `Dependencies`, and `Downloads` together. Moving only the executable will leave the required tools behind.
 
+## Android
+
+An Android port lives in [`android/`](android/) — Kotlin and Jetpack Compose, sharing the
+same download rules and the same purple-on-near-black palette. The Windows app is
+unchanged.
+
+It carries the formats, quality options, playlists, parallel downloads and profiles
+described below. Some things could not survive the move: Android forbids shipping loose
+`.exe` files, so yt-dlp, FFmpeg, Python and QuickJS are APK-bundled native libraries; the
+app sandbox forbids `--cookies-from-browser`, so sign-in happens in the app's own WebView;
+and Deno has no Android build, so QuickJS solves YouTube's player challenges instead.
+
+See [`android/README.md`](android/README.md) for building, and
+[`docs/download-rules.md`](docs/download-rules.md) for the behavioural contract both apps
+implement.
+
 ## Formats and quality
 
 ### Audio

@@ -23,6 +23,7 @@ import com.strik3forc3.ytdownloader.data.db.QueueItemEntity
 import com.strik3forc3.ytdownloader.work.DownloadQueue
 import com.strik3forc3.ytdownloader.work.DownloadService
 import com.strik3forc3.ytdownloader.work.SessionState
+import com.strik3forc3.ytdownloader.ytdlp.DownloadLogger
 import com.strik3forc3.ytdownloader.ytdlp.YtDlpEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -116,6 +117,7 @@ class HomeViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val engine: YtDlpEngine,
     private val shareInbox: ShareInbox,
+    private val logger: DownloadLogger,
 ) : ViewModel() {
 
     private data class LocalState(
@@ -163,6 +165,11 @@ class HomeViewModel @Inject constructor(
                 queue.recover()
                 refreshYtDlpIfStale()
             }.exceptionOrNull()
+
+            // Logged as well as shown. The banner previously carried the only record of a
+            // setup failure, so a release-build R8 problem surfaced on screen as a bare
+            // "ExceptionInInitializerError" with no stack trace anywhere to diagnose it.
+            failure?.let { logger.error("setup failed", it) }
 
             local.update {
                 it.copy(

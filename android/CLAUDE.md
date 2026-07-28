@@ -117,6 +117,25 @@ progress ring during a slow download is worse than none.
 - Load the `frontend-design` skill before building or reshaping UI.
 - A rule ported into `core/` without a unit test is not ported.
 
+### Release builds
+
+R8 breaks things unit tests cannot see. Two rules were only found by installing the
+release APK and reading the deobfuscated trace:
+
+- **Jackson** — `YoutubeDL` holds a static `ObjectMapper`; stripping its internals made the
+  static initialiser throw `ExceptionInInitializerError` with no mention of Jackson.
+- **Apache Commons Compress** — `ExtraFieldUtils` reflectively instantiates
+  `ZipExtraField` implementations, and losing their constructors broke the first-run
+  unpack of Python and FFmpeg entirely.
+
+**Always install and launch the release APK before calling a build good.** `assembleRelease`
+succeeding proves nothing. When it fails, deobfuscate with
+`app/build/outputs/mapping/release/mapping.txt` rather than guessing at the short names.
+
+Signing is optional by design: `keystore.properties` and `*.jks` are gitignored, and
+`assembleRelease` produces an unsigned APK when they are absent so a fresh clone still
+builds.
+
 ## Toolchain
 
 There is no system JDK on this machine. Gradle needs `JAVA_HOME` exported:
