@@ -9,6 +9,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
@@ -73,6 +76,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import com.strik3forc3.ytdownloader.core.ItemProgress
+import com.strik3forc3.ytdownloader.core.QueueParser
 import com.strik3forc3.ytdownloader.data.db.ItemStatus
 import com.strik3forc3.ytdownloader.data.db.QueueItemEntity
 
@@ -364,13 +368,21 @@ private fun LinkInput(
     adding: Boolean,
     enabled: Boolean,
 ) {
+    // Recomputed only when the text changes, not on every recomposition.
+    val linkCount = remember(value) { QueueParser.normaliseInput(value).size }
+
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp),
+                // Grows with the content, then scrolls. A fixed height silently clipped
+                // anything past the fourth line: links were in the box and doing nothing
+                // visible, with no scrollbar to suggest otherwise. The cap keeps the
+                // format pickers on screen rather than letting a long paste push them off.
+                .heightIn(min = 120.dp, max = 260.dp)
+                .verticalScroll(rememberScrollState()),
             placeholder = {
                 Text(
                     "Paste YouTube links, one per line",
@@ -389,9 +401,14 @@ private fun LinkInput(
             ),
         )
         // Expanding a playlist invokes yt-dlp and can take many seconds, so the button
-        // has to say so — otherwise the tap looks like it did nothing.
+        // has to say so — otherwise the tap looks like it did nothing. The count also
+        // confirms how many links were captured when the box has scrolled.
         SecondaryButton(
-            text = if (adding) "Reading links…" else "Add to queue",
+            text = when {
+                adding -> "Reading links…"
+                linkCount > 0 -> "Add $linkCount to queue"
+                else -> "Add to queue"
+            },
             onClick = onAdd,
             enabled = enabled && value.isNotBlank(),
             modifier = Modifier.fillMaxWidth(),
