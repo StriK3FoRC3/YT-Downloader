@@ -322,6 +322,13 @@ class HomeViewModel @Inject constructor(
 
     fun setMode(mode: DownloadMode) = update { settingsRepository.setMode(mode) }
     fun setAudioFormat(value: AudioFormat) = update { settingsRepository.setAudioFormat(value) }
+
+    /** Bitrate is stored per profile, matching the Windows app. */
+    fun setBitrate(value: BitrateSetting) = update {
+        val current = settingsRepository.settings.first()
+        val profile = profileRepository.byName(current.activeProfileName)
+        profileRepository.save(profile.copy(bitrate = value))
+    }
     fun setVideoFormat(value: VideoFormat) = update { settingsRepository.setVideoFormat(value) }
     fun setResolution(value: Resolution) = update { settingsRepository.setResolution(value) }
     fun setParallel(value: Int) = update { settingsRepository.setParallelDownloads(value) }

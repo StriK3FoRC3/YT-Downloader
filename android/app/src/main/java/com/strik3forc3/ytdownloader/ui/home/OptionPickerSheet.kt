@@ -27,13 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.strik3forc3.ytdownloader.core.AudioFormat
+import com.strik3forc3.ytdownloader.core.BitrateSetting
 import com.strik3forc3.ytdownloader.core.Resolution
 import com.strik3forc3.ytdownloader.core.VideoFormat
 import com.strik3forc3.ytdownloader.data.Settings
 import com.strik3forc3.ytdownloader.ui.theme.Motion
 import com.strik3forc3.ytdownloader.ui.theme.YtdlColors
 
-enum class PickerTarget { AudioFormat, VideoFormat, Resolution, Parallel, Profile }
+enum class PickerTarget { AudioFormat, Quality, VideoFormat, Resolution, Parallel, Profile }
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
@@ -50,6 +51,7 @@ fun OptionPickerSheet(
     state: HomeUiState,
     onDismiss: () -> Unit,
     onAudioFormat: (AudioFormat) -> Unit,
+    onBitrate: (BitrateSetting) -> Unit,
     onVideoFormat: (VideoFormat) -> Unit,
     onResolution: (Resolution) -> Unit,
     onParallel: (Int) -> Unit,
@@ -85,6 +87,14 @@ fun OptionPickerSheet(
                         subtitle = option.description(),
                         selected = option == state.settings.audioFormat,
                     ) { onAudioFormat(option); onDismiss() }
+                }
+
+                PickerTarget.Quality -> BitrateSetting.ALL.forEach { option ->
+                    Option(
+                        title = option.label,
+                        subtitle = option.description(state.settings.audioFormat),
+                        selected = option == state.activeProfile.bitrate,
+                    ) { onBitrate(option); onDismiss() }
                 }
 
                 PickerTarget.VideoFormat -> VideoFormat.entries.forEach { option ->
@@ -174,6 +184,7 @@ private fun Option(
 
 private fun PickerTarget.title(): String = when (this) {
     PickerTarget.AudioFormat -> "Audio format"
+    PickerTarget.Quality -> "Audio quality"
     PickerTarget.VideoFormat -> "Video format"
     PickerTarget.Resolution -> "Resolution"
     PickerTarget.Parallel -> "Downloads at once"
@@ -204,4 +215,28 @@ private fun com.strik3forc3.ytdownloader.core.Profile.summary(): String {
         if (embedThumbnail) add("thumbnail")
     }
     return if (parts.isEmpty()) "No rewriting" else parts.joinToString(" · ")
+}
+
+/**
+ * Bitrate guidance, which depends on the target format.
+ *
+ * A fixed bitrate always forces a re-encode, so for a format that could otherwise be
+ * copied byte-for-byte it is a downgrade. For MP3 — which YouTube never serves and which
+ * therefore always re-encodes — a higher bitrate genuinely does reduce the damage.
+ */
+private fun BitrateSetting.description(format: AudioFormat): String = when (this) {
+    is BitrateSetting.Automatic -> when {
+        format.isLossless -> "Decodes without a bitrate limit"
+        format == AudioFormat.MP3 -> "Picks a bitrate from the source — usually 192 kbps"
+        else -> "Copies the original stream when it can — no quality loss"
+    }
+    is BitrateSetting.Fixed -> when {
+        format.isLossless -> "Ignored for ${format.name}"
+        kbps >= 320 -> "Best quality this format can hold" +
+            if (format == AudioFormat.MP3) " — closest MP3 gets to the original" else ""
+        kbps >= 256 -> "Near-transparent, noticeably smaller than 320"
+        kbps >= 192 -> "Reasonable for music, some loss on dense tracks"
+        kbps >= 128 -> "Noticeable loss — fine for speech"
+        else -> "Small files, clearly degraded"
+    }
 }

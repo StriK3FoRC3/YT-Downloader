@@ -64,8 +64,19 @@ sealed interface BitrateSetting {
     @JvmInline
     value class Fixed(val kbps: Int) : BitrateSetting
 
+    /** As stored in a profile and shown in the picker. */
+    val label: String
+        get() = when (this) {
+            is Automatic -> "Automatic"
+            is Fixed -> "$kbps kbps"
+        }
+
     companion object {
         val ALLOWED_KBPS = listOf(320, 256, 224, 192, 160, 128, 96, 64, 48)
+
+        /** Automatic first, then the ladder highest to lowest. */
+        val ALL: List<BitrateSetting> =
+            listOf(Automatic) + ALLOWED_KBPS.map { Fixed(it) }
     }
 }
 

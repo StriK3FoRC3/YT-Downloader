@@ -205,6 +205,7 @@ fun HomeScreen(
             state = state,
             onDismiss = { picker = null },
             onAudioFormat = viewModel::setAudioFormat,
+            onBitrate = viewModel::setBitrate,
             onVideoFormat = viewModel::setVideoFormat,
             onResolution = viewModel::setResolution,
             onParallel = viewModel::setParallel,
@@ -451,6 +452,7 @@ private fun OptionsCard(
 
         if (state.settings.mode == DownloadMode.AUDIO) {
             PickerField("Format", state.settings.audioFormat.name) { onPick(PickerTarget.AudioFormat) }
+            PickerField("Quality", state.activeProfile.bitrate.label) { onPick(PickerTarget.Quality) }
         } else {
             PickerField("Format", state.settings.videoFormat.name) { onPick(PickerTarget.VideoFormat) }
             PickerField("Resolution", state.settings.resolution.label) { onPick(PickerTarget.Resolution) }
