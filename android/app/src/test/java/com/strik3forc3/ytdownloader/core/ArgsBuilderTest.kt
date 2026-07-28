@@ -77,7 +77,8 @@ class ArgsBuilderTest {
             request(audioFormat = AudioFormat.MP3),
             source = AudioSourceInfo("251", "opus", 128.0),
         )
-        assertThat(args).containsAtLeast("--audio-quality", "192K").inOrder()
+        // Automatic now targets the top of the ladder rather than scaling to the source.
+        assertThat(args).containsAtLeast("--audio-quality", "320K").inOrder()
     }
 
     @Test

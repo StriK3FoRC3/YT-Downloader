@@ -74,40 +74,36 @@ class BitrateLadderTest {
     }
 
     @Test
-    fun `mp3 ladder`() {
+    fun `automatic targets the best mp3 the encoder can do`() {
+        // Divergence from the reference, which scales to the source and lands on 192 for
+        // a typical ~130 kbps Opus stream. A lossy-to-lossy transcode needs headroom.
         val auto = BitrateSetting.Automatic
-        assertThat(BitrateLadder.resolve("mp3", source("opus", 128.0), auto)).isEqualTo(192)
-        assertThat(BitrateLadder.resolve("mp3", source("opus", 160.0), auto)).isEqualTo(192)
-        assertThat(BitrateLadder.resolve("mp3", source("opus", 161.0), auto)).isEqualTo(256)
-        assertThat(BitrateLadder.resolve("mp3", source("opus", 224.0), auto)).isEqualTo(256)
-        assertThat(BitrateLadder.resolve("mp3", source("opus", 225.0), auto)).isEqualTo(320)
+        assertThat(BitrateLadder.resolve("mp3", source("opus", 130.0), auto)).isEqualTo(320)
+        assertThat(BitrateLadder.resolve("mp3", source("opus", 64.0), auto)).isEqualTo(320)
+        assertThat(BitrateLadder.resolve("mp3", source("opus", 256.0), auto)).isEqualTo(320)
     }
 
     @Test
-    fun `mp3 folds the unknown source in with the lowest tier`() {
-        // Deliberate asymmetry with the generic ladder below; see rules §5.
+    fun `automatic targets the top of the ladder for other lossy formats`() {
         val auto = BitrateSetting.Automatic
-        assertThat(BitrateLadder.resolve("mp3", null, auto)).isEqualTo(192)
-        assertThat(BitrateLadder.resolve("mp3", source("opus", 0.0), auto)).isEqualTo(192)
+        assertThat(BitrateLadder.resolve("opus", source("mp4a", 128.0), auto)).isEqualTo(256)
+        assertThat(BitrateLadder.resolve("vorbis", source("mp4a", 64.0), auto)).isEqualTo(256)
     }
 
     @Test
-    fun `generic lossy ladder`() {
+    fun `an unknown source still gets the best target`() {
+        // A failed probe must not quietly downgrade the result.
         val auto = BitrateSetting.Automatic
-        assertThat(BitrateLadder.resolve("opus", source("mp4a", 64.0), auto)).isEqualTo(96)
-        assertThat(BitrateLadder.resolve("opus", source("mp4a", 65.0), auto)).isEqualTo(160)
-        assertThat(BitrateLadder.resolve("opus", source("mp4a", 160.0), auto)).isEqualTo(160)
-        assertThat(BitrateLadder.resolve("opus", source("mp4a", 161.0), auto)).isEqualTo(224)
-        assertThat(BitrateLadder.resolve("opus", source("mp4a", 224.0), auto)).isEqualTo(224)
-        assertThat(BitrateLadder.resolve("opus", source("mp4a", 225.0), auto)).isEqualTo(256)
+        assertThat(BitrateLadder.resolve("mp3", null, auto)).isEqualTo(320)
+        assertThat(BitrateLadder.resolve("opus", null, auto)).isEqualTo(256)
     }
 
     @Test
-    fun `generic lossy ladder short-circuits the unknown source to 160`() {
-        // Note this bypasses the <=64 tier, unlike a known 64 kbps source.
+    fun `source bitrate no longer changes the automatic target`() {
         val auto = BitrateSetting.Automatic
-        assertThat(BitrateLadder.resolve("opus", null, auto)).isEqualTo(160)
-        assertThat(BitrateLadder.resolve("vorbis", source("mp4a", 0.0), auto)).isEqualTo(160)
+        val low = BitrateLadder.resolve("mp3", source("opus", 48.0), auto)
+        val high = BitrateLadder.resolve("mp3", source("opus", 320.0), auto)
+        assertThat(low).isEqualTo(high)
     }
 
     @Test

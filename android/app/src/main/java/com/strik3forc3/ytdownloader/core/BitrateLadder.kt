@@ -60,28 +60,27 @@ object BitrateLadder {
 
         if (bitrate is BitrateSetting.Fixed) return bitrate.kbps
 
+        // The best possible outcome is no re-encode at all, so this is checked first and
+        // is why the source still has to be probed under Automatic.
         if (isPassthrough(targetCodec, source?.codec)) return NO_TRANSCODE
 
-        val sourceKbps = source?.averageBitrateKbps ?: 0.0
-
-        if (targetCodec == "mp3") {
-            // Note MP3 folds the unknown-source case in with "<= 160", unlike the branch
-            // below. Preserved deliberately from the reference; see rules §5.
-            return when {
-                sourceKbps <= 0.0 || sourceKbps <= 160.0 -> 192
-                sourceKbps <= 224.0 -> 256
-                else -> 320
-            }
-        }
-
-        return when {
-            sourceKbps <= 0.0 -> 160
-            sourceKbps <= 64.0 -> 96
-            sourceKbps <= 160.0 -> 160
-            sourceKbps <= 224.0 -> 224
-            else -> 256
-        }
+        // Automatic has to transcode, so it targets the top of the ladder.
+        //
+        // Divergence from the reference, which scales the target to the source's own
+        // bitrate — a ~130 kbps Opus stream lands on 192 kbps MP3. That is sound thinking
+        // for storage, but wrong for quality: a lossy-to-lossy transcode adds artefacts on
+        // top of what the source already lost, and the encoder needs headroom to avoid
+        // them. Dense material suffers audibly at 192. Files are larger; the user asked
+        // for the best the format can do, and can still pick a fixed bitrate to trade
+        // quality for size.
+        return if (targetCodec == "mp3") BEST_MP3_KBPS else BEST_LOSSY_KBPS
     }
+
+    /** The most an MP3 encoder will use — the ceiling for a forced re-encode. */
+    const val BEST_MP3_KBPS = 320
+
+    /** Top of the ladder for Opus, Vorbis and AAC, which are efficient enough not to need 320. */
+    const val BEST_LOSSY_KBPS = 256
 
     /**
      * Whether probing the source stream can change the outcome.

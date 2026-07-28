@@ -110,6 +110,10 @@ any other lossy target:
     otherwise                        → 256
 ```
 
+> **Android diverges here** — see "Platform divergences". Automatic on Android does not
+> scale to the source; once a transcode is unavoidable it targets 320 (MP3) or 256
+> (other lossy). Passthrough is unaffected and still takes priority.
+
 `ParseBitrateSetting` (line 1582) accepts only `48|64|96|128|160|192|224|256|320` followed
 by `kbps`, case-insensitive. Anything else — including `Automatic` — is `0`.
 
@@ -265,4 +269,5 @@ Deliberate, permanent differences on Android. Not bugs, not TODOs.
 | Output mechanism (§10) | Per-item temp directory instead of whole-folder prefix scans. |
 | Video selector (§2) | Android appends `/best*` (and `/best*<limit>` when a height cap is set). The reference's chain ends at `best<limit>`, which matches only a **pre-muxed** format — YouTube frequently publishes none above 360p, so the chain can fail with "Requested format is not available" for a video it could have downloaded. |
 | Queue dedup (§8) | Android deduplicates by canonical video identity, not raw URL string. Android's share sheet stamps a per-share `?si=` parameter, so the same video shared twice yields two different URLs and would otherwise queue twice. |
+| Automatic bitrate (§5) | Once Automatic is forced to transcode, Android targets the top of the ladder — 320 kbps for MP3, 256 for other lossy formats — instead of scaling to the source's own bitrate. The reference maps a typical ~130 kbps Opus stream onto 192 kbps MP3, which is sound for storage but audibly lossy on dense material: a lossy-to-lossy transcode stacks artefacts and the encoder needs headroom. Passthrough still wins where the codec matches, so the source is still probed. |
 | Error text (§9) | Android appends an actionable hint for recognised causes. yt-dlp's "Requested format is not available" is, on YouTube, almost always the bot check rather than a format problem, and repeating it verbatim sends users to change a setting that cannot help. |

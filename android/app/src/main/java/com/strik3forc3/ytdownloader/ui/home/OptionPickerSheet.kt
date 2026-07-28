@@ -227,8 +227,8 @@ private fun com.strik3forc3.ytdownloader.core.Profile.summary(): String {
 private fun BitrateSetting.description(format: AudioFormat): String = when (this) {
     is BitrateSetting.Automatic -> when {
         format.isLossless -> "Decodes without a bitrate limit"
-        format == AudioFormat.MP3 -> "Picks a bitrate from the source — usually 192 kbps"
-        else -> "Copies the original stream when it can — no quality loss"
+        format == AudioFormat.MP3 -> "Best possible — re-encodes at 320 kbps"
+        else -> "Best possible — copies the original stream, or 256 kbps if it cannot"
     }
     is BitrateSetting.Fixed -> when {
         format.isLossless -> "Ignored for ${format.name}"
