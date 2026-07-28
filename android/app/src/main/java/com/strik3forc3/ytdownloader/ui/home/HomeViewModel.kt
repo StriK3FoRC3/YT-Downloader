@@ -11,6 +11,7 @@ import com.strik3forc3.ytdownloader.core.Profile
 import com.strik3forc3.ytdownloader.core.QueueParser
 import com.strik3forc3.ytdownloader.core.Resolution
 import com.strik3forc3.ytdownloader.core.VideoFormat
+import com.strik3forc3.ytdownloader.core.YtDlpVersion
 import com.strik3forc3.ytdownloader.data.ProfileRepository
 import com.strik3forc3.ytdownloader.data.Settings
 import com.strik3forc3.ytdownloader.data.SettingsRepository
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 /** Everything one frame of the home screen needs, assembled once. */
@@ -47,6 +49,8 @@ data class HomeUiState(
      * as a persistent banner rather than a transient message.
      */
     val setupError: String? = null,
+    /** Shown during first-run work, e.g. unpacking or refreshing yt-dlp. */
+    val setupStatus: String? = null,
 ) {
     val activeProfile: Profile
         get() = profiles.firstOrNull { it.name == settings.activeProfileName } ?: Profile.Default
@@ -87,6 +91,7 @@ class HomeViewModel @Inject constructor(
     private data class LocalState(
         val setupComplete: Boolean = false,
         val setupError: String? = null,
+        val setupStatus: String? = null,
         val adding: Boolean = false,
     )
 
@@ -114,6 +119,7 @@ class HomeViewModel @Inject constructor(
             setupComplete = localState.setupComplete,
             adding = localState.adding,
             setupError = localState.setupError,
+            setupStatus = localState.setupStatus,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
@@ -124,15 +130,57 @@ class HomeViewModel @Inject constructor(
             val failure = runCatching {
                 engine.ensureInitialised()
                 queue.recover()
+                refreshYtDlpIfStale()
             }.exceptionOrNull()
 
             local.update {
                 it.copy(
                     setupComplete = true,
+                    setupStatus = null,
                     setupError = failure?.let { error ->
                         error.message ?: error::class.simpleName ?: "Unknown error"
                     },
                 )
+            }
+        }
+    }
+
+    /**
+     * Updates yt-dlp when the bundled copy has aged out.
+     *
+     * The version frozen inside `youtubedl-android` is months old by the time anyone
+     * installs the app, and an out-of-date yt-dlp cannot solve YouTube's current player
+     * challenges — so it is served storyboard images only and *every* download fails.
+     * Leaving that to a button the user has to discover means the app is broken on first
+     * run for no visible reason.
+     *
+     * A failed update is not fatal: the existing copy may still work, and the download
+     * itself will report the real problem.
+     */
+    private suspend fun refreshYtDlpIfStale() {
+        val version = engine.versionOrNull()
+        if (!YtDlpVersion.isStale(version, LocalDate.now())) return
+
+        local.update { it.copy(setupStatus = "Updating yt-dlp…") }
+        when (engine.updateYtDlp()) {
+            YtDlpEngine.UpdateResult.UPDATED ->
+                _message.value = "yt-dlp updated to ${engine.versionOrNull() ?: "the latest version"}."
+            YtDlpEngine.UpdateResult.FAILED ->
+                _message.value = "Could not update yt-dlp. Downloads may fail until it updates."
+            YtDlpEngine.UpdateResult.ALREADY_CURRENT -> Unit
+        }
+    }
+
+    /** Manual retry, for when the automatic update could not reach GitHub. */
+    fun updateYtDlp() {
+        viewModelScope.launch {
+            local.update { it.copy(setupStatus = "Updating yt-dlp…") }
+            val result = engine.updateYtDlp()
+            local.update { it.copy(setupStatus = null) }
+            _message.value = when (result) {
+                YtDlpEngine.UpdateResult.UPDATED -> "yt-dlp updated."
+                YtDlpEngine.UpdateResult.ALREADY_CURRENT -> "yt-dlp is already current."
+                YtDlpEngine.UpdateResult.FAILED -> "Update failed. Check the connection."
             }
         }
     }
@@ -196,6 +244,19 @@ class HomeViewModel @Inject constructor(
     /** Swipe-to-dismiss on a queue row. */
     fun remove(itemId: String) {
         viewModelScope.launch { queue.remove(itemId) }
+    }
+
+    /** Swipe right on a failed row. */
+    fun retry(itemId: String) {
+        viewModelScope.launch {
+            queue.retry(itemId)
+            _message.value = "Requeued. Tap Download to run it again."
+        }
+    }
+
+    /** No installed app claimed the finished file's type. */
+    fun reportNoHandler() {
+        _message.value = "No app on this device can open that file."
     }
 
     fun clearFinished() {

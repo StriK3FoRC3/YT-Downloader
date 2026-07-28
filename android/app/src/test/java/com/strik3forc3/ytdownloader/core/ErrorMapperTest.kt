@@ -47,14 +47,37 @@ class ErrorMapperTest {
     }
 
     @Test
-    fun `format-unavailable is explained as a sign-in problem`() {
-        // yt-dlp's wording points at the format setting, but on YouTube this means the
-        // extractor was served no playable formats at all. Changing format cannot help.
+    fun `format-unavailable points at both plausible causes`() {
+        // yt-dlp's wording points at the format setting, but on YouTube it means the
+        // extractor was served no usable formats at all. Changing format cannot help.
         val described = ErrorMapper.describe(
             "ERROR: [youtube] abc: Requested format is not available. Use --list-formats"
         )
         assertThat(described).contains("Requested format is not available")
-        assertThat(described).contains("Sign in under Settings")
+        assertThat(described).contains("Update yt-dlp")
+    }
+
+    @Test
+    fun `a stale yt-dlp is not misdiagnosed as a sign-in problem`() {
+        // Verbatim from a real device failure: signed in with 41 cookies, yet every
+        // download failed because the bundled yt-dlp was eight months old and could no
+        // longer solve the player challenges. An earlier version of this mapper blamed
+        // the bot check and sent the user to sign in, which they had already done.
+        val stderr = """
+            WARNING: Your yt-dlp version (2025.11.12) is older than 90 days!
+            WARNING: [youtube] [jsc] Error solving 2 challenge requests using "quickjs"
+                     provider: Error running QuickJS process (returncode: 1):
+                     found 0 n function possibilities.
+            WARNING: [youtube] _NaDKDTssjU: Signature solving failed: Some formats may be missing.
+            WARNING: [youtube] _NaDKDTssjU: n challenge solving failed: Some formats may be missing.
+            WARNING: Only images are available for download. use --list-formats to see them
+            ERROR: [youtube] _NaDKDTssjU: Requested format is not available. Use --list-formats
+        """.trimIndent()
+
+        val described = ErrorMapper.describe(stderr)
+        assertThat(described).contains("out of date")
+        assertThat(described).contains("Settings → Components")
+        assertThat(described).doesNotContain("YouTube sign-in")
     }
 
     @Test

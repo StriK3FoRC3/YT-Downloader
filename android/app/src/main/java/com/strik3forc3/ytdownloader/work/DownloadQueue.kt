@@ -174,6 +174,17 @@ class DownloadQueue @Inject constructor(
         _state.update { it.copy(active = it.active - itemId) }
     }
 
+    /**
+     * Requeues a failed item.
+     *
+     * Most failures here are transient — a stale yt-dlp, a dropped connection, a rate
+     * limit — so retrying the one item that failed beats re-pasting the link and
+     * re-expanding the whole playlist.
+     */
+    suspend fun retry(itemId: String) {
+        queueDao.retry(itemId)
+    }
+
     suspend fun clearFinished() = queueDao.clearFinished()
 
     private fun QueueParser.Entry.toRow(
@@ -288,7 +299,8 @@ class DownloadQueue @Inject constructor(
                     if (outputs.isEmpty()) {
                         fail(item.id, "Downloaded media was not found after processing.")
                     } else {
-                        queueDao.setComplete(item.id, outputs.first().displayName)
+                        val output = outputs.first()
+                        queueDao.setComplete(item.id, output.displayName, output.uri.toString())
                         _state.update { it.copy(completed = it.completed + 1) }
                     }
                 }

@@ -52,11 +52,26 @@ object ErrorMapper {
     }
 
     private fun hintFor(lowercased: String): String? = when {
-        lowercased.contains("sign in to confirm") ||
-            lowercased.contains("not a bot") ||
-            lowercased.contains("requested format is not available") ->
+        // Checked first, and deliberately so. When YouTube's player JS changes, an older
+        // yt-dlp can no longer solve the signature and n-parameter challenges, so the
+        // only formats it is offered are storyboard images — and the *final* line reads
+        // "Requested format is not available". Attributing that to the bot check sends
+        // people to sign in, which cannot possibly help.
+        lowercased.contains("only images are available") ||
+            lowercased.contains("challenge solving failed") ||
+            lowercased.contains("signature solving failed") ||
+            lowercased.contains("n function possibilities") ||
+            lowercased.contains("is older than") ->
+            "yt-dlp is out of date and can no longer read YouTube's player. " +
+                "Update it under Settings → Components, then try again."
+
+        lowercased.contains("sign in to confirm") || lowercased.contains("not a bot") ->
             "YouTube is withholding this video from anonymous downloads. " +
                 "Sign in under Settings → YouTube sign-in, then try again."
+
+        lowercased.contains("requested format is not available") ->
+            "YouTube offered no usable formats. Update yt-dlp under Settings → Components; " +
+                "if that does not help, sign in under Settings → YouTube sign-in."
 
         lowercased.contains("age") && lowercased.contains("restrict") ->
             "Age-restricted. Signing in under Settings is required."

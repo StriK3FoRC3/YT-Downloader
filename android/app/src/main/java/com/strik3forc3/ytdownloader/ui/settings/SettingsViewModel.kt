@@ -132,10 +132,19 @@ class SettingsViewModel @Inject constructor(
     // Profile edits write through to the active profile.
 
     fun setCleanTitles(value: Boolean) = editProfile { it.copy(cleanTitles = value) }
-    fun setRemoveArtistPrefix(value: Boolean) = editProfile { it.copy(removeArtistPrefix = value) }
+    fun setRemoveArtistPrefix(value: Boolean) = editProfile {
+        it.copy(removeArtistPrefix = value, cleanTitles = if (value) true else it.cleanTitles)
+    }
     fun setMetadataEnabled(value: Boolean) = editProfile { it.copy(metadataEnabled = value) }
     fun setEmbedThumbnail(value: Boolean) = editProfile { it.copy(embedThumbnail = value) }
 
+    /**
+     * Selecting any tag switches title cleanup on.
+     *
+     * These rows used to be disabled until the master toggle was flipped, which is a dead
+     * end: tapping the thing you actually want does nothing and nothing explains why.
+     * Ticking "Official video" states the intent unambiguously, so the master follows.
+     */
     fun togglePreset(preset: TitlePreset, enabled: Boolean) = editProfile { profile ->
         val rules = profile.presetRules.toMutableList()
         if (enabled) {
@@ -143,14 +152,22 @@ class SettingsViewModel @Inject constructor(
         } else {
             rules.removeAll(preset.terms)
         }
-        profile.copy(presetRules = rules)
+        profile.copy(
+            presetRules = rules,
+            cleanTitles = if (enabled) true else profile.cleanTitles,
+        )
     }
 
+    /** Selecting any field switches metadata embedding on, for the same reason. */
     fun toggleMetadataField(field: MetadataField, enabled: Boolean) = editProfile { profile ->
         val fields = profile.metadataFields.toMutableSet()
         if (enabled) fields += field else fields -= field
-        profile.copy(metadataFields = fields)
+        profile.copy(
+            metadataFields = fields,
+            metadataEnabled = if (enabled) true else profile.metadataEnabled,
+        )
     }
+
 
     private fun editProfile(transform: (Profile) -> Profile) {
         viewModelScope.launch {

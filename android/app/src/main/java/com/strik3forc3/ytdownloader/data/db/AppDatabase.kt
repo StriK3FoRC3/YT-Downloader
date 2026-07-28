@@ -9,6 +9,9 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.Upsert
+import androidx.room.migration.Migration
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
 import com.strik3forc3.ytdownloader.core.AudioFormat
 import com.strik3forc3.ytdownloader.core.DownloadMode
 import com.strik3forc3.ytdownloader.core.Resolution
@@ -70,8 +73,17 @@ interface QueueDao {
     @Query("UPDATE queue_items SET status = :status, failureReason = :reason WHERE id = :id")
     suspend fun setFailure(id: String, reason: String, status: ItemStatus = ItemStatus.FAILED)
 
-    @Query("UPDATE queue_items SET status = :status, outputName = :outputName WHERE id = :id")
-    suspend fun setComplete(id: String, outputName: String?, status: ItemStatus = ItemStatus.DONE)
+    @Query("UPDATE queue_items SET status = :status, outputName = :outputName, outputUri = :outputUri WHERE id = :id")
+    suspend fun setComplete(
+        id: String,
+        outputName: String?,
+        outputUri: String?,
+        status: ItemStatus = ItemStatus.DONE,
+    )
+
+    /** Requeues a failed item, clearing the previous reason so a stale error is not shown. */
+    @Query("UPDATE queue_items SET status = :status, failureReason = NULL WHERE id = :id")
+    suspend fun retry(id: String, status: ItemStatus = ItemStatus.QUEUED)
 
     @Query("SELECT COALESCE(MAX(position), -1) + 1 FROM queue_items")
     suspend fun nextPosition(): Int
@@ -117,11 +129,25 @@ interface ProfileDao {
 
 @Database(
     entities = [QueueItemEntity::class, ProfileEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun queueDao(): QueueDao
     abstract fun profileDao(): ProfileDao
+
+    companion object {
+        /**
+         * Adds the finished file's document URI so a completed row can be tapped to open
+         * it. Written out rather than falling back to a destructive migration — losing a
+         * user's saved profiles on an upgrade is the exact failure the Windows app has
+         * when one line of `settings.ini` fails to parse.
+         */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(connection: SQLiteConnection) {
+                connection.execSQL("ALTER TABLE queue_items ADD COLUMN outputUri TEXT")
+            }
+        }
+    }
 }

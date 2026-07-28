@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.strik3forc3.ytdownloader.BuildConfig
 import com.strik3forc3.ytdownloader.core.MetadataField
 import com.strik3forc3.ytdownloader.core.TitleCleanup
 import com.strik3forc3.ytdownloader.data.CookieMode
@@ -159,14 +161,13 @@ fun SettingsScreen(
                         subtitle = "\"Bruno Mars - The Lazy Song\" becomes \"The Lazy Song\"",
                         checked = state.profile.removeArtistPrefix,
                         onCheckedChange = viewModel::setRemoveArtistPrefix,
-                        enabled = state.profile.cleanTitles,
                     )
                     TitleCleanup.PRESETS.forEach { preset ->
                         ToggleRow(
                             title = preset.label,
+                            subtitle = "Removes “(${preset.label})” from the filename",
                             checked = preset.terms.all { it in state.profile.presetRules },
                             onCheckedChange = { viewModel.togglePreset(preset, it) },
-                            enabled = state.profile.cleanTitles,
                         )
                     }
                 }
@@ -188,7 +189,6 @@ fun SettingsScreen(
                             title = field.id,
                             checked = field in state.profile.metadataFields,
                             onCheckedChange = { viewModel.toggleMetadataField(field, it) },
-                            enabled = state.profile.metadataEnabled,
                         )
                     }
                 }
@@ -244,6 +244,72 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            item {
+                SettingsSection(
+                    title = "About",
+                    summary = "Version ${BuildConfig.VERSION_NAME}",
+                ) {
+                    Column(
+                        Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Credit(
+                            role = "Created by",
+                            name = "StriK3FoRC3",
+                            detail = "Founder of the project and author of the original Windows app.",
+                        )
+                        Credit(
+                            role = "Android port by",
+                            name = "Dload",
+                        )
+
+                        HorizontalDivider(color = YtdlColors.Outline)
+
+                        Text(
+                            "Built on",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = YtdlColors.AccentText,
+                        )
+                        // These do the actual work and carry their own licences; see
+                        // THIRD_PARTY_NOTICES.md in the repository.
+                        Text(
+                            "yt-dlp — extraction and downloading\n" +
+                                "FFmpeg — merging, conversion, metadata\n" +
+                                "QuickJS — solving YouTube's player challenges\n" +
+                                "Python — the runtime yt-dlp needs",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = YtdlColors.TextMuted,
+                        )
+                        Text(
+                            "Each is a separate program under its own licence. " +
+                                "Not affiliated with YouTube or Google.",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = YtdlColors.TextDisabled,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** One attribution line: who, and what they did. */
+@Composable
+private fun Credit(role: String, name: String, detail: String? = null) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            role,
+            style = MaterialTheme.typography.labelSmall,
+            color = YtdlColors.AccentText,
+        )
+        Text(
+            name,
+            style = MaterialTheme.typography.titleLarge,
+            color = YtdlColors.TextPrimary,
+        )
+        detail?.let {
+            Text(it, style = MaterialTheme.typography.bodyMedium, color = YtdlColors.TextMuted)
         }
     }
 }

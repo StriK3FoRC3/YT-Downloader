@@ -36,6 +36,8 @@ data class QueueItemEntity(
     val position: Int,
     val failureReason: String? = null,
     val outputName: String? = null,
+    /** SAF document URI of the finished file, so a completed row can open it. */
+    val outputUri: String? = null,
     val thumbnailUrl: String? = null,
     val sourceBitrateKbps: Double? = null,
     val sourceCodec: String? = null,

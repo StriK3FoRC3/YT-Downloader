@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -58,6 +61,7 @@ import com.strik3forc3.ytdownloader.ui.theme.Motion
 import com.strik3forc3.ytdownloader.ui.theme.YtdlColors
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.SnackbarHost
@@ -67,7 +71,9 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import com.strik3forc3.ytdownloader.core.ItemProgress
+import com.strik3forc3.ytdownloader.data.db.ItemStatus
 import com.strik3forc3.ytdownloader.data.db.QueueItemEntity
 
 @Composable
@@ -170,6 +176,12 @@ fun HomeScreen(
                     item = item,
                     progress = state.progressFor(item.id),
                     onRemove = { viewModel.remove(item.id) },
+                    onRetry = { viewModel.retry(item.id) },
+                    onOpen = {
+                        if (!openOutput(context, item)) {
+                            viewModel.reportNoHandler()
+                        }
+                    },
                     // Rows reflow rather than jumping when one is removed or completes.
                     modifier = Modifier.animateItem(
                         placementSpec = Motion.placementSpring(),
@@ -178,7 +190,7 @@ fun HomeScreen(
             }
 
             if (state.items.isEmpty()) {
-                item("empty") { EmptyState(state.setupComplete) }
+                item("empty") { EmptyState(state.setupComplete, state.setupStatus) }
             }
         }
     }
@@ -202,6 +214,10 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
+            .background(YtdlColors.Background)
+            // enableEdgeToEdge() draws behind the status bar, so a custom top bar has to
+            // inset itself — Scaffold only offsets the *content*, not the bars.
+            .statusBarsPadding()
             .padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -225,11 +241,14 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
 }
 
 /**
- * Swipe either way to drop an item.
+ * Directional swipe actions, plus tap-to-open once a download has finished.
  *
- * The Windows app has no way to remove a queued item at all — the only options are run
- * the whole batch or cancel it. On a phone, pruning a 40-item playlist down to the three
- * tracks you actually wanted is the common case.
+ * Swipe **left** removes; swipe **right** retries a failed item. Retry is only offered
+ * on failures — allowing it on a queued or finished row would mean the same gesture does
+ * different things depending on state, which is worse than it not being there.
+ *
+ * The Windows app has none of this: no way to remove one item, no way to retry one item,
+ * and no way to reach the file it just wrote.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -237,51 +256,82 @@ private fun SwipeableQueueRow(
     item: QueueItemEntity,
     progress: ItemProgress?,
     onRemove: () -> Unit,
+    onRetry: () -> Unit,
+    onOpen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        // A quarter of the width. The default threshold is half, which is a long drag
-        // on a tall list.
-        positionalThreshold = { distance -> distance * 0.25f },
-    )
+    val canRetry = item.status == ItemStatus.FAILED
+    val canOpen = item.status == ItemStatus.DONE && item.outputUri != null
 
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) onRemove()
-    }
+    val dismissState = rememberSwipeToDismissBoxState(
+        // A quarter of the width. The default threshold is half, which is a long drag on
+        // a tall list.
+        positionalThreshold = { distance -> distance * 0.25f },
+        confirmValueChange = { value ->
+            when (value) {
+                SwipeToDismissBoxValue.EndToStart -> { onRemove(); true }
+                // Returning false snaps the row back after firing, so the item stays
+                // visible and can be watched as it re-runs.
+                SwipeToDismissBoxValue.StartToEnd -> { if (canRetry) onRetry(); false }
+                SwipeToDismissBoxValue.Settled -> true
+            }
+        },
+    )
 
     SwipeToDismissBox(
         state = dismissState,
         modifier = modifier,
+        enableDismissFromStartToEnd = canRetry,
         backgroundContent = {
-            // Red is the app's error colour and appears only behind a destructive
-            // gesture, never as a button fill.
+            val direction = dismissState.dismissDirection
+            val retrying = direction == SwipeToDismissBoxValue.StartToEnd
             val active = dismissState.targetValue != SwipeToDismissBoxValue.Settled
+
+            // Semantic colour only past the commit point — red for destructive, the
+            // brand accent for the recoverable action.
+            val accent = if (retrying) YtdlColors.Accent else YtdlColors.Error
             val tint by animateColorAsState(
-                targetValue = if (active) YtdlColors.Error else YtdlColors.SurfaceRaised,
+                targetValue = if (active) accent else YtdlColors.SurfaceRaised,
                 animationSpec = Motion.fast(),
-                label = "dismissTint",
+                label = "swipeTint",
             )
+
             Box(
                 Modifier
                     .fillMaxSize()
                     .background(tint.copy(alpha = 0.18f), RoundedCornerShape(14.dp))
                     .padding(horizontal = 22.dp),
-                contentAlignment = if (dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
-                    Alignment.CenterStart
-                } else {
-                    Alignment.CenterEnd
-                },
+                contentAlignment = if (retrying) Alignment.CenterStart else Alignment.CenterEnd,
             ) {
                 Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Remove from queue",
-                    tint = if (active) YtdlColors.Error else YtdlColors.TextMuted,
+                    imageVector = if (retrying) Icons.Default.Refresh else Icons.Default.Delete,
+                    contentDescription = if (retrying) "Retry" else "Remove from queue",
+                    tint = if (active) accent else YtdlColors.TextMuted,
                 )
             }
         },
     ) {
-        QueueRow(item = item, progress = progress)
+        QueueRow(
+            item = item,
+            progress = progress,
+            onClick = if (canOpen) onOpen else null,
+        )
     }
+}
+
+/**
+ * Opens a finished download in whatever app handles its type.
+ *
+ * The URI is a SAF document we wrote, so read access has to be granted explicitly to the
+ * receiving app.
+ */
+private fun openOutput(context: android.content.Context, item: QueueItemEntity): Boolean {
+    val uri = item.outputUri?.toUri() ?: return false
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, context.contentResolver.getType(uri) ?: "*/*")
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    return runCatching { context.startActivity(intent) }.isSuccess
 }
 
 @Composable
@@ -474,16 +524,16 @@ private fun QueueHeading(state: HomeUiState) {
 }
 
 @Composable
-private fun EmptyState(setupComplete: Boolean) {
+private fun EmptyState(setupComplete: Boolean, setupStatus: String?) {
     Box(
         Modifier.fillMaxWidth().padding(vertical = 48.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = if (setupComplete) {
-                "Nothing queued yet.\nPaste a link to get started."
-            } else {
-                "Setting up yt-dlp…"
+            text = when {
+                setupStatus != null -> setupStatus
+                setupComplete -> "Nothing queued yet.\nPaste a link to get started."
+                else -> "Setting up yt-dlp…"
             },
             style = MaterialTheme.typography.bodyLarge,
             color = YtdlColors.TextDisabled,
@@ -502,6 +552,10 @@ private fun ActionBar(
         Modifier
             .fillMaxWidth()
             .background(YtdlColors.Background)
+            // Clears the gesture bar or the three-button navigation, and lifts above the
+            // keyboard when the link field has focus.
+            .navigationBarsPadding()
+            .imePadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {

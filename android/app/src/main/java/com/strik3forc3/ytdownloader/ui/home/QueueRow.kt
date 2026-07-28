@@ -7,6 +7,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,9 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ripple
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,6 +52,8 @@ fun QueueRow(
     item: QueueItemEntity,
     progress: ItemProgress?,
     modifier: Modifier = Modifier,
+    /** Non-null once the file exists and can be opened. */
+    onClick: (() -> Unit)? = null,
 ) {
     val failed = item.status == ItemStatus.FAILED
     val phase = progress?.phase ?: item.status.toPhase()
@@ -67,6 +73,18 @@ fun QueueRow(
         modifier = modifier
             .fillMaxWidth()
             .background(background, RoundedCornerShape(14.dp))
+            .then(
+                if (onClick == null) {
+                    Modifier
+                } else {
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(color = YtdlColors.AccentText),
+                        onClickLabel = "Open ${item.outputName ?: "file"}",
+                        onClick = onClick,
+                    )
+                }
+            )
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -161,7 +179,7 @@ private fun QueueItemEntity.formatLabel(): String = when (mode) {
 private fun QueueItemEntity.statusLine(progress: ItemProgress?): String = when {
     status == ItemStatus.FAILED -> "Failed"
     status == ItemStatus.CANCELLED -> "Cancelled"
-    status == ItemStatus.DONE -> outputName ?: "Finished"
+    status == ItemStatus.DONE -> outputName?.let { "$it · tap to open" } ?: "Finished"
     progress?.phase == DownloadPhase.EXTRACTING -> "Reading link…"
     // Naming the post-processor tells the user *why* the bar has stopped moving.
     progress?.phase == DownloadPhase.PROCESSING ->

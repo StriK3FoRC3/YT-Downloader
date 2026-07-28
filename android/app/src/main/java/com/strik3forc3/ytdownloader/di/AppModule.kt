@@ -23,6 +23,7 @@ object AppModule {
             // No fallbackToDestructiveMigration: losing a user's profiles on an upgrade
             // is exactly the failure mode the reference has, where one unparseable line
             // in settings.ini silently resets everything.
+            .addMigrations(AppDatabase.MIGRATION_1_2)
             .build()
 
     @Provides fun queueDao(database: AppDatabase): QueueDao = database.queueDao()
