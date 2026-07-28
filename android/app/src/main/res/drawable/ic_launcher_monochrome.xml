@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon variant: single flat shape, tinted by the system launcher. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108"
+    android:tint="#FFFFFF">
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,26 L60,26 L60,56 L74,56 L54,80 L34,56 L48,56 Z" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M37,85 L71,85 A3,3 0 0,1 71,91 L37,91 A3,3 0 0,1 37,85 Z" />
+
+</vector>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors YtdlColors.Background in ui/theme/Color.kt. Keep the two in sync. -->
+    <color name="background">#FF191919</color>
+    <color name="ic_launcher_background">#FF191919</color>
+</resources>

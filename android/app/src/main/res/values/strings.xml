@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">YT Downloader</string>
+    <string name="cookie_login_title">Sign in to YouTube</string>
+    <string name="cancel">Cancel</string>
+    <string name="notification_channel_downloads">Downloads</string>
+</resources>
