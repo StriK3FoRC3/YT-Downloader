@@ -15,4 +15,27 @@
         <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
     </style>
 
+    <!--
+      Launch theme. core-splashscreen back-ports the Android 12 splash contract to
+      minSdk, so this is the only place the launch screen is described.
+
+      The window is the app's own background, and the icon sits on a red disc — the
+      launcher icon, continued rather than restated. postSplashScreenTheme is what
+      hands the activity back to the theme above; without it the app keeps the splash
+      window attributes for its whole life.
+
+      The parent MUST be Theme.SplashScreen.IconBackground, not Theme.SplashScreen.
+      Only that variant maps windowSplashScreenIconBackgroundColor onto the platform
+      attribute; under the plain parent the item below is accepted, ignored, and the
+      glyph renders straight onto the window background with no disc at all — a white
+      badge with a red play mark instead of the logo, and nothing warns you.
+    -->
+    <style name="Theme.YtDownloader.Splash" parent="Theme.SplashScreen.IconBackground">
+        <item name="windowSplashScreenBackground">@color/background</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_animated</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.YtDownloader</item>
+    </style>
+
 </resources>

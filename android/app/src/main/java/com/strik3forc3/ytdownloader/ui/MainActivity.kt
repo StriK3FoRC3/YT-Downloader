@@ -5,10 +5,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -39,6 +41,19 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Before super.onCreate and before anything else: this swaps the launch theme out
+        // for Theme.YtDownloader.
+        val splash = installSplashScreen()
+
+        // Hold the splash for the length of the icon animation. Without this the app is
+        // ready first and the animation is cut off after a frame or two — on a warm start
+        // it never becomes legible at all. The cost is real: this is added latency on
+        // every launch, paid deliberately so the launch animation can actually be seen.
+        val splashStart = SystemClock.uptimeMillis()
+        splash.setKeepOnScreenCondition {
+            SystemClock.uptimeMillis() - splashStart < SPLASH_HOLD_MS
+        }
+
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
@@ -73,6 +88,15 @@ class MainActivity : ComponentActivity() {
         // EXTRA_TEXT carries the link; EXTRA_SUBJECT is usually the video title, which is
         // of no use here since yt-dlp resolves the real title itself.
         shareInbox.offer(intent.getStringExtra(Intent.EXTRA_TEXT))
+    }
+
+    private companion object {
+        /**
+         * The ~920ms of ic_splash_animated.xml plus a beat on the finished logo. Raising
+         * this does not slow the animation down, it only lengthens that final pause; the
+         * choreography's own speed lives in res/animator/splash_*.xml.
+         */
+        const val SPLASH_HOLD_MS = 1200L
     }
 }
 

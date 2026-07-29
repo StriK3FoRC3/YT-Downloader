@@ -18,7 +18,8 @@ transcoding itself.
 
 | Path | Owner |
 | --- | --- |
-| `src/`, `build.bat`, `app.manifest`, `icon.ico` | Windows app |
+| `src/`, `build.bat`, `app.manifest` | Windows app |
+| `icon.ico` | The brand mark. Repo-wide; every platform's icon derives from it. |
 | `docs/` | Shared behavioural spec |
 | `android/` | Android app |
 | `README.md`, `THIRD_PARTY_NOTICES.md` | Repo-wide, user-facing |
@@ -33,6 +34,10 @@ effect of Android work.
   matrix, title cleanup, metadata mapping — means changing that file first, then both
   implementations. Deliberate platform differences belong in its "Platform divergences"
   table; anything not listed there is a bug in one of the two apps.
+- **`icon.ico` is the only source of the app icon.** The Android launcher, notification and
+  splash vectors are *traces* of it, in that file's 256-unit pixel space, not independent
+  drawings. Redrawing the mark for one platform, or hand-tweaking a derived path, is how
+  the front ends end up with subtly different logos. Re-trace instead.
 - `src/Program.cs` builds with `/warnaserror+`. Any warning fails the build.
 - The four executables (`yt-dlp`, `ffmpeg`, `ffprobe`, `deno`) are gitignored and never
   committed. Their versions and licences are tracked in `THIRD_PARTY_NOTICES.md`.

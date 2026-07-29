@@ -15,6 +15,7 @@ passthrough, download profiles, and yt-dlp self-update.
 | `ytdlp/` | `YtDlpEngine`, `DownloadLogger`, `OutputFinalizer`, `cookie/` providers. |
 | `work/` | `DownloadQueue` (bounded-concurrency scheduler) and `DownloadService` (foreground). |
 | `ui/` | Compose screens, theme, motion, `components/`. |
+| `res/drawable/ic_launcher_*`, `res/drawable/ic_notification.xml`, `res/drawable/ic_splash_*`, `res/animator/splash_*` | The app mark, the status-bar icon and the launch animation. All traced from `../icon.ico`; see "Icon and splash". |
 
 ### Share sheet
 
@@ -102,6 +103,42 @@ Two rules that fix what is actually wrong with the original:
    are never used to colour a button.
 2. **Hierarchy over density.** The settings screen's flat grid of 20+ checkboxes becomes
    grouped cards with collapsible sections and 48dp touch targets.
+
+### Icon and splash
+
+The launcher icon and the launch animation are traced from `../icon.ico` and live in that
+file's 256-unit coordinate space, scaled into the 108dp adaptive canvas by the outer group
+in each vector. Do not redraw them by hand — see the root `CLAUDE.md`.
+
+- **The mark is red, the app is purple.** `ic_launcher_background` is `#FFFA3037`, sampled
+  from the source. This is the one place the brand and the in-app accent diverge, and it is
+  deliberate: the mark predates the palette. Do not "fix" it to `#9F00FF`.
+- The glyph is scaled to **0.27874** and centred so it fits inside a 66dp circle. That is
+  what keeps every launcher mask — circle, squircle, rounded square — from clipping it.
+  Changing the scale means re-checking all three masks.
+- `ic_launcher_foreground` carries the play mark as a **second subpath knocked out with
+  `evenOdd`**. `ic_splash_logo` cannot do that: a mark scaling up inside a same-coloured
+  hole is invisible, so it uses a solid badge with the mark as a separate red path. The two
+  files therefore hold different badge geometry on purpose.
+- `ic_notification.xml` is the same mark, not a generic arrow, but it is at the edge of
+  what 24dp holds: the play mark survives only as a knockout and the tray as a hairline.
+  Dropping the tray to buy room does not work — the badge sets the width, so the arrow
+  just gets smaller and it reads less like a download.
+- `ic_splash_logo.xml` stores the animation's **first frame**, not the resting logo. Opened
+  on its own it shows a bare badge. It and `ic_splash_animated.xml` are edited together.
+- The arrow animates its **clip**, never its position. It sits where the finished logo puts
+  it and the clip window grows over it; moving it instead leaves the badge's slot half
+  empty mid-flight, which reads as a missing piece rather than a transfer.
+- **The splash is held open on purpose**, by `SPLASH_HOLD_MS` in `MainActivity`. Without
+  it the app wins the race and the animation is cut off after a frame or two — on a warm
+  start it never becomes legible. That constant is a *pause on the finished logo*, not a
+  speed control: the choreography's timing lives in `res/animator/splash_*.xml`, and
+  changing one without the other either truncates the animation or leaves dead air.
+- `Theme.YtDownloader.Splash` must inherit **`Theme.SplashScreen.IconBackground`**. Only
+  that variant maps `windowSplashScreenIconBackgroundColor` onto the platform attribute.
+  Under the plain `Theme.SplashScreen` the item is accepted and silently ignored, the red
+  disc never appears, and the glyph renders onto the window background as a white badge
+  with a red play mark. Nothing warns you; it only shows up on a device.
 
 Motion is a requirement, not decoration: container transform on item → detail,
 `animateItemPlacement` for queue reflow, an animated progress ring that transitions
