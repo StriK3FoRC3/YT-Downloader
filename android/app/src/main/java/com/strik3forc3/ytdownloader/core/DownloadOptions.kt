@@ -74,9 +74,27 @@ sealed interface BitrateSetting {
     companion object {
         val ALLOWED_KBPS = listOf(320, 256, 224, 192, 160, 128, 96, 64, 48)
 
-        /** Automatic first, then the ladder highest to lowest. */
-        val ALL: List<BitrateSetting> =
+        /**
+         * Automatic first, then the ladder highest to lowest.
+         *
+         * **`by lazy` is load-bearing, not style.** Computing this during the companion's
+         * initialiser deadlocks on itself: `getLabel` makes [BitrateSetting] an interface
+         * with a default method, so initialising [Automatic] must initialise the interface
+         * first, which builds the companion, which reads `Automatic.INSTANCE` — still null,
+         * because that assignment is the statement waiting on all of this. The JVM does not
+         * re-enter an initialiser already running on the same thread, so it hands back null
+         * rather than blocking, and `ALL` keeps a null first element for the life of the
+         * process.
+         *
+         * Nothing warns you. `Profile.Default` carries `bitrate = Automatic`, so the app
+         * always trips the bad order at startup, and the only symptom is the Quality picker
+         * — the sole place this list is iterated — throwing NPE on `option.label`.
+         * Deferring the list past class initialisation is what breaks the cycle;
+         * `BitrateSettingInitOrderTest` fails if this becomes an initialised field again.
+         */
+        val ALL: List<BitrateSetting> by lazy {
             listOf(Automatic) + ALLOWED_KBPS.map { Fixed(it) }
+        }
     }
 }
 

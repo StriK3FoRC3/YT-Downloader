@@ -49,9 +49,14 @@ class MainActivity : ComponentActivity() {
         // ready first and the animation is cut off after a frame or two — on a warm start
         // it never becomes legible at all. The cost is real: this is added latency on
         // every launch, paid deliberately so the launch animation can actually be seen.
+        //
+        // Only worth paying where something actually animates. androidx.core.splashscreen
+        // hands pre-31 devices a static window background and never starts the drawable, so
+        // below API 31 this would buy a motionless second of a logo they can already see.
         val splashStart = SystemClock.uptimeMillis()
         splash.setKeepOnScreenCondition {
-            SystemClock.uptimeMillis() - splashStart < SPLASH_HOLD_MS
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                SystemClock.uptimeMillis() - splashStart < SPLASH_HOLD_MS
         }
 
         enableEdgeToEdge()

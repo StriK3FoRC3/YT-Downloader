@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
@@ -41,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,7 +92,9 @@ fun HomeScreen(
     val input by viewModel.urlInput.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
 
-    var picker by remember { mutableStateOf<PickerTarget?>(null) }
+    // Saveable, not just remembered: rotating or folding recreates the activity, and a
+    // plain remember drops the open sheet mid-choice.
+    var picker by rememberSaveable { mutableStateOf<PickerTarget?>(null) }
     val snackbars = remember { SnackbarHostState() }
     val context = LocalContext.current
 
@@ -130,10 +135,16 @@ fun HomeScreen(
             )
         },
     ) { padding ->
+      Box(
+          Modifier
+              .fillMaxSize()
+              .padding(padding),
+          contentAlignment = Alignment.TopCenter,
+      ) {
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+                .fillMaxHeight()
+                .widthIn(max = MaxContentWidth),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -197,6 +208,7 @@ fun HomeScreen(
                 item("empty") { EmptyState(state.setupComplete, state.setupStatus) }
             }
         }
+      }
     }
 
     picker?.let { target ->
@@ -216,13 +228,19 @@ fun HomeScreen(
 
 @Composable
 private fun HomeHeader(onOpenSettings: () -> Unit) {
+  Box(
+      Modifier
+          .fillMaxWidth()
+          .background(YtdlColors.Background)
+          // enableEdgeToEdge() draws behind the status bar, so a custom top bar has to
+          // inset itself — Scaffold only offsets the *content*, not the bars.
+          .statusBarsPadding(),
+      contentAlignment = Alignment.TopCenter,
+  ) {
     Row(
         Modifier
+            .widthIn(max = MaxContentWidth)
             .fillMaxWidth()
-            .background(YtdlColors.Background)
-            // enableEdgeToEdge() draws behind the status bar, so a custom top bar has to
-            // inset itself — Scaffold only offsets the *content*, not the bars.
-            .statusBarsPadding()
             .padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -243,6 +261,7 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
             Icon(Icons.Default.Settings, "Settings", tint = YtdlColors.TextMuted)
         }
     }
+  }
 }
 
 /**
@@ -571,14 +590,20 @@ private fun ActionBar(
     onCancel: () -> Unit,
     onChooseFolder: () -> Unit,
 ) {
+  Box(
+      Modifier
+          .fillMaxWidth()
+          .background(YtdlColors.Background)
+          // Clears the gesture bar or the three-button navigation, and lifts above the
+          // keyboard when the link field has focus.
+          .navigationBarsPadding()
+          .imePadding(),
+      contentAlignment = Alignment.TopCenter,
+  ) {
     Column(
         Modifier
+            .widthIn(max = MaxContentWidth)
             .fillMaxWidth()
-            .background(YtdlColors.Background)
-            // Clears the gesture bar or the three-button navigation, and lifts above the
-            // keyboard when the link field has focus.
-            .navigationBarsPadding()
-            .imePadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -605,4 +630,15 @@ private fun ActionBar(
             )
         }
     }
+  }
 }
+
+/**
+ * Reading width for the one-column layout.
+ *
+ * Nothing here benefits from a second pane, but letting a 10" tablet stretch the link box
+ * and the option rows to the full 1280dp turns every row into a label marooned from its
+ * value. Capping and centring keeps the phone layout untouched — it is already narrower
+ * than this — while a tablet gets the same proportions rather than a stretched phone.
+ */
+private val MaxContentWidth = 640.dp

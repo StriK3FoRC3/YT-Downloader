@@ -1,6 +1,7 @@
 package com.strik3forc3.ytdownloader.ui.home
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.strik3forc3.ytdownloader.core.AudioFormat
@@ -118,6 +119,7 @@ class HomeViewModel @Inject constructor(
     private val engine: YtDlpEngine,
     private val shareInbox: ShareInbox,
     private val logger: DownloadLogger,
+    private val savedState: SavedStateHandle,
 ) : ViewModel() {
 
     private data class LocalState(
@@ -129,8 +131,19 @@ class HomeViewModel @Inject constructor(
 
     private val local = MutableStateFlow(LocalState())
 
-    private val _urlInput = MutableStateFlow("")
-    val urlInput: StateFlow<String> = _urlInput.asStateFlow()
+    /**
+     * Backed by [SavedStateHandle] rather than a plain flow.
+     *
+     * A ViewModel survives rotation but not process death, and this box is where a batch of
+     * pasted or shared links is assembled — sometimes dozens, collected over several trips
+     * to YouTube. Being killed in the background is the *normal* outcome of that workflow,
+     * and losing the box silently was indistinguishable from the app discarding the work.
+     */
+    val urlInput: StateFlow<String> = savedState.getStateFlow(KEY_URL_INPUT, "")
+
+    private var urlInputValue: String
+        get() = savedState[KEY_URL_INPUT] ?: ""
+        set(value) { savedState[KEY_URL_INPUT] = value }
 
     /** One-shot user-facing messages. The UI must drain these; nothing else reads them. */
     private val _message = MutableStateFlow<String?>(null)
@@ -240,8 +253,8 @@ class HomeViewModel @Inject constructor(
                     return@collect
                 }
 
-                val merge = SharedText.appendTo(_urlInput.value, text)
-                _urlInput.value = merge.text
+                val merge = SharedText.appendTo(urlInputValue, text)
+                urlInputValue = merge.text
                 if (merge.addedCount == 0) {
                     _message.value = "That video is already in the box."
                 }
@@ -249,14 +262,14 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun onUrlInputChange(value: String) { _urlInput.value = value }
+    fun onUrlInputChange(value: String) { urlInputValue = value }
 
     fun dismissMessage() { _message.value = null }
 
     fun addLinks() {
         if (local.value.adding) return
 
-        val input = _urlInput.value
+        val input = urlInputValue
         if (QueueParser.normaliseInput(input).isEmpty()) {
             _message.value = "That does not look like a link. Paste a full YouTube URL starting with https://"
             return
@@ -267,7 +280,7 @@ class HomeViewModel @Inject constructor(
             try {
                 val added = queue.enqueue(input)
                 if (added > 0) {
-                    _urlInput.value = ""
+                    urlInputValue = ""
                     _message.value = "Added $added ${if (added == 1) "item" else "items"}."
                 } else {
                     _message.value = "Nothing could be read from those links."
@@ -346,5 +359,9 @@ class HomeViewModel @Inject constructor(
 
     private fun update(block: suspend () -> Unit) {
         viewModelScope.launch { block() }
+    }
+
+    private companion object {
+        const val KEY_URL_INPUT = "urlInput"
     }
 }

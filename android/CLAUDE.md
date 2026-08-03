@@ -124,21 +124,50 @@ in each vector. Do not redraw them by hand — see the root `CLAUDE.md`.
   what 24dp holds: the play mark survives only as a knockout and the tray as a hairline.
   Dropping the tray to buy room does not work — the badge sets the width, so the arrow
   just gets smaller and it reads less like a download.
-- `ic_splash_logo.xml` stores the animation's **first frame**, not the resting logo. Opened
-  on its own it shows a bare badge. It and `ic_splash_animated.xml` are edited together.
+- **`ic_splash_logo.xml` must hold the FINISHED logo.** It is not just the animation's
+  base drawable, it is the *entire* splash below API 31 — see the next bullet — so any
+  element parked at `fillAlpha="0"` or behind a zero-area clip is invisible on every
+  Android 8-11 device. Holding the animation's first frame here shipped a bare red disc
+  with no logo to exactly those devices. Nothing is lost: every animator in
+  `res/animator/splash_*.xml` declares its own start (`valueFrom`, or a `fraction="0"`
+  keyframe), so API 31+ playback ignores the resting state declared here.
+- **The launch animation only plays on API 31+.** `androidx.core.splashscreen` back-ports
+  the Android 12 splash *layout*, not its animation: below 31 the icon is composited into
+  the window background — painted by the system before the process exists — and the
+  library's pre-31 path never calls `Animatable.start()`. Treat pre-31 as a static logo.
 - The arrow animates its **clip**, never its position. It sits where the finished logo puts
   it and the clip window grows over it; moving it instead leaves the badge's slot half
   empty mid-flight, which reads as a missing piece rather than a transfer.
-- **The splash is held open on purpose**, by `SPLASH_HOLD_MS` in `MainActivity`. Without
-  it the app wins the race and the animation is cut off after a frame or two — on a warm
-  start it never becomes legible. That constant is a *pause on the finished logo*, not a
-  speed control: the choreography's timing lives in `res/animator/splash_*.xml`, and
-  changing one without the other either truncates the animation or leaves dead air.
+- **The splash is held open on purpose**, by `SPLASH_HOLD_MS` in `MainActivity`, **and only
+  on API 31+**. Without it the app wins the race and the animation is cut off after a frame
+  or two — on a warm start it never becomes legible. That constant is a *pause on the
+  finished logo*, not a speed control: the choreography's timing lives in
+  `res/animator/splash_*.xml`, and changing one without the other either truncates the
+  animation or leaves dead air. Below 31 nothing animates, so the hold is skipped rather
+  than spending a second of launch latency on a motionless image.
 - `Theme.YtDownloader.Splash` must inherit **`Theme.SplashScreen.IconBackground`**. Only
   that variant maps `windowSplashScreenIconBackgroundColor` onto the platform attribute.
   Under the plain `Theme.SplashScreen` the item is accepted and silently ignored, the red
   disc never appears, and the glyph renders onto the window background as a white badge
   with a red play mark. Nothing warns you; it only shows up on a device.
+
+### Surviving the device
+
+The app is one column on every screen, but "one column" is not "one width", and an Activity
+is not a safe place to keep anything.
+
+- **Cap and centre the column.** `MaxContentWidth` (home) and `MaxSettingsWidth` (settings)
+  are 640dp. Phones are already narrower, so this is invisible there; without it a 10"
+  tablet strands each row's label and value at opposite ends of 1280dp.
+- **UI state that a user can see must be `rememberSaveable`, not `remember`.** Rotating,
+  folding, or unfolding recreates the Activity. The open picker sheet is the case that
+  bit: a plain `remember` dropped it mid-choice.
+- **Anything the user typed belongs in `SavedStateHandle`.** A ViewModel survives rotation
+  but not process death, and the link box holds work collected over several trips to
+  YouTube — being killed in the background is the normal end of that workflow, not an edge
+  case.
+- Text sizes are `sp` and rows are `defaultMinSize`d rather than fixed-height, so a 1.5x
+  font scale grows them instead of clipping.
 
 Motion is a requirement, not decoration: container transform on item → detail,
 `animateItemPlacement` for queue reflow, an animated progress ring that transitions
@@ -168,6 +197,23 @@ release APK and reading the deobfuscated trace:
 **Always install and launch the release APK before calling a build good.** `assembleRelease`
 succeeding proves nothing. When it fails, deobfuscate with
 `app/build/outputs/mapping/release/mapping.txt` rather than guessing at the short names.
+
+### Initialisation order in sealed hierarchies
+
+Not every device-only crash is R8's fault, and assuming it is sends you chasing keep rules
+for a bug that reproduces on a plain JVM.
+
+A `companion object` field that builds a collection out of the sealed type's own members
+**deadlocks on itself**. An interface with a body-carrying property or function — such as
+`BitrateSetting.label` — is an interface with a *default method*, so initialising any
+implementation must initialise the interface first, which builds the companion, which
+reads the implementation's `INSTANCE` while that assignment is still pending. The JVM does
+not re-enter an initialiser already running on the same thread; it returns null instead of
+blocking, and the collection keeps a null entry for the life of the process.
+
+Defer such collections past class initialisation (`by lazy`). `BitrateSettingInitOrderTest`
+guards this one, and shows the shape of the test: it must be the **first thing in its JVM**
+to touch the type, or it initialises the classes in the safe order and passes vacuously.
 
 Signing is optional by design: `keystore.properties` and `*.jks` are gitignored, and
 `assembleRelease` produces an unsigned APK when they are absent so a fresh clone still
@@ -201,9 +247,14 @@ export JAVA_HOME=~/.local/jdk/jdk-21.0.12+8
 ./gradlew :app:lintDebug            # expect 0 errors
 ```
 
-Current baseline: 95 unit tests passing, lint clean apart from two `OldTargetApi`
+Current baseline: 141 unit tests passing, lint clean apart from two `OldTargetApi`
 notices. `lint.xml` silences dependency-freshness noise only — never add a suppression
 there to make a real finding go away.
+
+An **API 26 emulator is the cheapest way to catch what a modern phone hides** — the AVD
+`api26s7` is configured to the Galaxy S7's metrics (1440x2560, 640dpi, Android 8.0), which
+is where the bitrate-picker crash reproduced and a 160dpi API 26 image did not. Drive it
+with `adb shell input tap`; races surface on repetition, not on a single pass.
 
 Install the **per-ABI** APK (`app-arm64-v8a-debug.apk`, ~79 MB), not the 232 MB universal
 build, and install on a **physical device** — emulators misrepresent both FFmpeg
