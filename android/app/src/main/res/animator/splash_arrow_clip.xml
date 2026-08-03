@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The download itself: the arrow is drawn downwards out of the slot in the badge's
+  bottom edge and into the tray.
+
+  This animates the CLIP, not the arrow. The arrow never moves — it stays at the exact
+  position it occupies in the finished logo, and the clip window grows over it. Moving
+  the arrow instead leaves the slot half empty mid-flight, which reads as a missing
+  piece rather than a transfer. The slot is real geometry from the logo, not something
+  added for the animation.
+
+  Rectangles morph only when the command sequences match, so both values are written
+  as the same four-line path; the start is the zero-height degenerate case.
+-->
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="340"
+    android:interpolator="@android:anim/linear_interpolator"
+    android:propertyName="pathData"
+    android:startOffset="380"
+    android:valueFrom="M88,131 L174,131 L174,131 L88,131 Z"
+    android:valueTo="M88,131 L174,131 L174,215 L88,215 Z"
+    android:valueType="pathType" />

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+
+    <!--
+      Lint reports the -v26 qualifier as redundant at minSdk 26, but removing it stops
+      AAPT resolving the adaptive icons at all. Verified: the build fails without it.
+    -->
+    <issue id="ObsoleteSdkInt">
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+
+    <!--
+      Dependency-freshness noise. Toolchain versions are pinned deliberately and
+      documented in gradle/libs.versions.toml; bumping them is a considered change, not
+      something to be nagged about on every build.
+    -->
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="NewerVersionAvailable" severity="ignore" />
+
+</lint>

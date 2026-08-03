@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The play mark lands inside the badge: now there is a video. Sharper overshoot
+     than the badge, because it is the beat the eye should catch. -->
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="240"
+    android:interpolator="@android:anim/linear_interpolator"
+    android:startOffset="160">
+
+    <propertyValuesHolder
+        android:propertyName="scaleX"
+        android:valueType="floatType">
+        <keyframe android:fraction="0" android:value="0.45" />
+        <keyframe android:fraction="0.7083" android:value="1.09" />
+        <keyframe android:fraction="1" android:value="1" />
+    </propertyValuesHolder>
+
+    <propertyValuesHolder
+        android:propertyName="scaleY"
+        android:valueType="floatType">
+        <keyframe android:fraction="0" android:value="0.45" />
+        <keyframe android:fraction="0.7083" android:value="1.09" />
+        <keyframe android:fraction="1" android:value="1" />
+    </propertyValuesHolder>
+
+</objectAnimator>

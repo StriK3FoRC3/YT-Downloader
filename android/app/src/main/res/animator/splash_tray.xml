@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The tray opens outwards from its own centre, then flexes when the arrow lands on it.
+
+  Two animators on one group rather than one: the widening and the catch are separated
+  by 230ms of stillness, and a single keyframe list spanning that gap would have to
+  encode the pause as duplicate stops.
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <objectAnimator
+        android:duration="160"
+        android:interpolator="@android:anim/decelerate_interpolator"
+        android:propertyName="scaleX"
+        android:startOffset="300"
+        android:valueFrom="0.5"
+        android:valueTo="1"
+        android:valueType="floatType" />
+
+    <objectAnimator
+        android:duration="230"
+        android:interpolator="@android:anim/linear_interpolator"
+        android:startOffset="690">
+        <propertyValuesHolder
+            android:propertyName="scaleY"
+            android:valueType="floatType">
+            <keyframe android:fraction="0" android:value="1" />
+            <keyframe android:fraction="0.3043" android:value="0.88" />
+            <keyframe android:fraction="0.6522" android:value="1.04" />
+            <keyframe android:fraction="1" android:value="1" />
+        </propertyValuesHolder>
+    </objectAnimator>
+
+</set>
