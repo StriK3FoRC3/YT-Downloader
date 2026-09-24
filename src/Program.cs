@@ -19,8 +19,8 @@ using System.Windows.Forms;
 [assembly: AssemblyDescription("YouTube video and playlist downloader")]
 [assembly: AssemblyCompany("StriK3FoRC3")]
 [assembly: AssemblyProduct("YT Downloader")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
 
 namespace YTDownloader
 {
@@ -148,6 +148,7 @@ namespace YTDownloader
         private readonly DarkDropDown cookieBrowserBox = new DarkDropDown();
         private readonly DarkDropDown bitrateSettingsBox = new DarkDropDown();
         private readonly AccentCheckBox thumbnailToggle = new AccentCheckBox();
+        private readonly DarkDropDown thumbnailSizeBox = new DarkDropDown();
         private readonly AccentCheckBox titleFilterToggle = new AccentCheckBox();
         private readonly AccentCheckBox removeArtistPrefixToggle = new AccentCheckBox();
         private readonly AccentCheckBox metadataToggle = new AccentCheckBox();
@@ -245,7 +246,7 @@ namespace YTDownloader
             newProfileButton = new StyledButton("New profile", Purple, boldFont);
             saveProfileButton = new StyledButton("Save profile", Green, boldFont);
             deleteProfileButton = new StyledButton("Delete", Red, boldFont);
-            closeSettingsButton = new StyledButton("Close", Gray, boldFont);
+            closeSettingsButton = new StyledButton("Close", Blue, boldFont);
 
             Text = "YT Downloader";
             MinimumSize = new Size(800, 550);
@@ -265,7 +266,7 @@ namespace YTDownloader
             WireEvents();
             UpdateMode();
             UpdateToolStatus();
-            WriteLog("Application started. Version 1.0.0. Cookie setting: " + cookieBrowserBox.Text + ". Detected default: " + DetectDefaultBrowserForCookies());
+            WriteLog("Application started. Version 1.1.0. Cookie setting: " + cookieBrowserBox.Text + ". Detected default: " + DetectDefaultBrowserForCookies());
         }
 
         private string FindTool(string name)
@@ -281,7 +282,6 @@ namespace YTDownloader
             activeProfileLabel.TextAlign = ContentAlignment.MiddleRight;
             activeProfileBox.Font = profileIndicatorBoldFont;
             activeProfileBox.ForeColor = Green;
-            activeProfileBox.CenterText = true;
             Label urlLabel = MakeLabel("YouTube links (one per line)", boldFont, TextColor);
             Label typeLabel = MakeLabel("Download type", boldFont, TextColor);
             Label formatLabel = MakeLabel("Format", boldFont, TextColor);
@@ -306,14 +306,10 @@ namespace YTDownloader
             ConfigureCombo(audioFormat, new object[] { "MP3", "M4A", "FLAC", "WAV", "OGG", "OPUS", "AAC" }, 0);
             ConfigureCombo(videoFormat, new object[] { "MP4", "MKV", "WEBM" }, 0);
             ConfigureCombo(resolution, new object[] { "Highest", "4320p (8K)", "2160p (4K)", "1440p", "1080p", "720p", "480p", "360p" }, 0);
-            ConfigureCombo(simultaneousDownloads, new object[] { "1 at once", "2 at once", "3 at once", "4 at once", "5 at once" }, 1);
-            audioFormat.CenterText = true;
-            videoFormat.CenterText = true;
-            resolution.CenterText = true;
-            simultaneousDownloads.CenterText = true;
+            ConfigureCombo(simultaneousDownloads, new object[] { "1 at once", "2 at once", "3 at once", "4 at once", "5 at once", "10 at once" }, 1);
+            ConfigureCombo(thumbnailSizeBox, new object[] { "Highest available", "Large", "Medium", "Small" }, 0);
             ConfigureCombo(cookieBrowserBox, new object[] { "Automatic", "Firefox", "Chrome", "Edge", "Brave", "Opera", "Vivaldi", "Chromium", "Disabled" }, 0);
             ConfigureCombo(bitrateSettingsBox, new object[] { "Automatic", "320 kbps", "256 kbps", "224 kbps", "192 kbps", "160 kbps", "128 kbps", "96 kbps", "64 kbps", "48 kbps" }, 0);
-            bitrateSettingsBox.CenterText = true;
             ConfigureCheck(thumbnailToggle, "Embed thumbnail", true);
             ConfigureCheck(titleFilterToggle, "Title Cleanup", true);
             ConfigureCheck(removeArtistPrefixToggle, "Remove artist prefix (Artist - Title)", false);
@@ -547,6 +543,16 @@ namespace YTDownloader
             saveProfileButton.SetBounds(397, 590, 130, 32);
             deleteProfileButton.SetBounds(537, 590, 85, 32);
             closeSettingsButton.SetBounds(632, 590, 85, 32);
+            // Give thumbnail selection its own row without crowding the option switches.
+            foreach (Control control in settingsWindow.Controls)
+                if (control.Top >= 178) control.Top += 40;
+            Label thumbnailSizeLabel = MakeLabel("Thumbnail size", boldFont, TextColor);
+            thumbnailSizeLabel.SetBounds(18, 180, 130, 25);
+            thumbnailSizeBox.SetBounds(155, 178, 190, 28);
+            settingsWindow.Controls.Add(thumbnailSizeLabel);
+            settingsWindow.Controls.Add(thumbnailSizeBox);
+            settingsWindow.MinimumSize = new Size(720, 692);
+            settingsWindow.Size = new Size(740, 712);
             settingsWindow.Paint += delegate(object sender, PaintEventArgs e)
             {
                 Rectangle profileOutline = profileNameBox.Bounds;
@@ -570,7 +576,7 @@ namespace YTDownloader
                 helpLabel.Width = w - 36;
                 customHelpLink.Left = 18;
                 customHelpLink.Width = 202;
-                filterRulesBox.Height = Math.Max(80, h - 522);
+                filterRulesBox.Height = Math.Max(80, h - 562);
                 UpdateFilterRulesScrollBar();
                 int buttonTop = filterRulesBox.Bottom + 6;
                 customHelpLink.Top = buttonTop + 7;
@@ -665,7 +671,7 @@ namespace YTDownloader
 
                 Label warningHeading = MakeLabel("Cookies, privacy, and account safety", boldFont, Yellow);
                 Label warningBody = MakeLabel(
-                    "Downloading 5 at once reaches YouTube's request limits faster and can cause failures or temporary blocking. Use 1 or 2 at once unless more is necessary.\r\n" +
+                    "Downloading 5 or 10 at once reaches YouTube's request limits faster and can cause failures or temporary blocking. Use 1 or 2 at once unless more is necessary.\r\n" +
                     "With Automatic or a selected browser, the app tells yt-dlp to read that browser's cookies locally. The app itself never reads, saves, uploads, or logs the cookie values.\r\n" +
                     "Relevant cookies are sent only to YouTube/Google download services as part of the authenticated requests. They are not sent to the app developer or an unrelated service.\r\n" +
                     "YouTube can still associate downloads with the signed-in account. yt-dlp warns that the account could be banned temporarily or permanently and suggests considering a throwaway account.",
@@ -833,7 +839,8 @@ namespace YTDownloader
             foreach (AccentCheckBox option in MetadataOptionControls()) option.CheckedChanged += delegate { UpdateMetadataSelectAll(); SaveActiveProfileOptions(); };
             allMetadataFieldsToggle.CheckedChanged += delegate { ToggleAllMetadataFields(); };
             metadataToggle.CheckedChanged += delegate { UpdateMetadataControls(); SaveActiveProfileOptions(); };
-            thumbnailToggle.CheckedChanged += delegate { SaveActiveProfileOptions(); };
+            thumbnailToggle.CheckedChanged += delegate { thumbnailSizeBox.Enabled = thumbnailToggle.Checked && !running; SaveActiveProfileOptions(); };
+            thumbnailSizeBox.SelectedIndexChanged += delegate { SaveActiveProfileOptions(); };
             titleFilterToggle.CheckedChanged += delegate { UpdateTitleCleanupControls(); SaveActiveProfileOptions(); };
             removeArtistPrefixToggle.CheckedChanged += delegate { SaveActiveProfileOptions(); };
             foreach (TitleFilterOption option in titleFilterOptions) option.CheckBox.CheckedChanged += delegate { UpdateTitleTagsSelectAll(); SaveActiveProfileOptions(); };
@@ -1383,6 +1390,13 @@ namespace YTDownloader
             args.Append("--ignore-config ").Append(JavaScriptArguments()).Append(CookieArguments())
                 .Append("--no-playlist --newline --windows-filenames --break-match-filters !is_live ");
             bool embedStandardMetadata = metadataToggle.Checked && MetadataOptionControls().Any(x => x.Checked && x != metadataChaptersToggle);
+            if (thumbnailToggle.Checked && (!audioMode.Checked || (selectedAudioFormat != "wav" && selectedAudioFormat != "aac"))
+                && thumbnailSizeBox.SelectedIndex > 0)
+            {
+                args.Append("--plugin-dirs ").Append(Quote(Path.Combine(dependenciesDir, "plugins")))
+                    .Append(" --use-postprocessor ")
+                    .Append(Quote("NativeThumbnail:when=pre_process;size=" + thumbnailSizeBox.Text.ToLowerInvariant())).Append(' ');
+            }
             if (embedStandardMetadata)
             {
                 args.Append("--embed-metadata --no-embed-info-json ");
@@ -1802,6 +1816,12 @@ namespace YTDownloader
             simultaneousDownloads.Enabled = !busy;
             metadataToggle.Enabled = !busy;
             thumbnailToggle.Enabled = !busy;
+            thumbnailSizeBox.Enabled = !busy && thumbnailToggle.Checked;
+            activeProfileBox.Enabled = !busy;
+            filterProfileBox.Enabled = !busy;
+            newProfileButton.Enabled = !busy;
+            saveProfileButton.Enabled = !busy;
+            deleteProfileButton.Enabled = !busy;
             titleFilterToggle.Enabled = !busy;
             cookieBrowserBox.Enabled = !busy;
             bitrateSettingsBox.Enabled = !busy;
@@ -2363,7 +2383,7 @@ namespace YTDownloader
         private void LoadPreferences()
         {
             filterProfiles.Clear();
-            AddDefaultProfile();
+            filterProfiles.Add(new FilterProfile("Default"));
             if (!File.Exists(settingsPath)) { RefreshProfileSelector("Default"); return; }
             try
             {
@@ -2380,11 +2400,12 @@ namespace YTDownloader
                         string name = DecodeSetting(GetValue(values, "Profile" + i + "Name"));
                         if (!string.IsNullOrWhiteSpace(name))
                         {
-                            FilterProfile profile = new FilterProfile(name, new string[0]);
+                            FilterProfile profile = new FilterProfile(name);
                             profile.PresetRules = SplitRules(DecodeSetting(GetValue(values, "Profile" + i + "PresetRules")));
                             profile.CustomRules = SplitLinesPreserve(DecodeSetting(GetValue(values, "Profile" + i + "CustomRules")));
                             profile.RebuildRules();
                             profile.EmbedThumbnail = GetBool(values, "Profile" + i + "Thumbnail", false);
+                            profile.ThumbnailSize = GetValue(values, "Profile" + i + "ThumbnailSize") ?? "Highest available";
                             profile.MetadataEnabled = GetBool(values, "Profile" + i + "MetadataEnabled", false);
                             profile.CleanTitles = GetBool(values, "Profile" + i + "CleanTitles", false);
                             profile.RemoveArtistPrefix = GetBool(values, "Profile" + i + "RemoveArtistPrefix", false);
@@ -2403,7 +2424,7 @@ namespace YTDownloader
                 SelectCombo(audioFormat, GetValue(values, "AudioFormat"));
                 SelectCombo(videoFormat, GetValue(values, "VideoFormat"));
                 SelectCombo(resolution, GetValue(values, "Resolution"));
-                SelectDownloadCount(simultaneousDownloads, GetValue(values, "SimultaneousDownloads"));
+                SelectCombo(simultaneousDownloads, GetValue(values, "SimultaneousDownloads"));
                 videoMode.Checked = string.Equals(GetValue(values, "Mode"), "Video", StringComparison.OrdinalIgnoreCase);
                 audioMode.Checked = !videoMode.Checked;
                 RestoreColumns(downloads, values, "Activity");
@@ -2440,6 +2461,7 @@ namespace YTDownloader
                     lines.Add("Profile" + i + "PresetRules=" + EncodeSetting(string.Join("\n", filterProfiles[i].PresetRules.ToArray())));
                     lines.Add("Profile" + i + "CustomRules=" + EncodeSetting(string.Join("\n", filterProfiles[i].CustomRules.ToArray())));
                     lines.Add("Profile" + i + "Thumbnail=" + filterProfiles[i].EmbedThumbnail);
+                    lines.Add("Profile" + i + "ThumbnailSize=" + filterProfiles[i].ThumbnailSize);
                     lines.Add("Profile" + i + "MetadataEnabled=" + filterProfiles[i].MetadataEnabled);
                     lines.Add("Profile" + i + "CleanTitles=" + filterProfiles[i].CleanTitles);
                     lines.Add("Profile" + i + "RemoveArtistPrefix=" + filterProfiles[i].RemoveArtistPrefix);
@@ -2492,14 +2514,9 @@ namespace YTDownloader
             if (index >= 0) box.SelectedIndex = index;
         }
 
-        private static void SelectDownloadCount(DarkDropDown box, string value)
-        {
-            SelectCombo(box, value);
-        }
-
         private static int ParseDownloadCount(string value)
         {
-            Match match = Regex.Match(value ?? "", @"^\s*([1-5])\s+at once\s*$", RegexOptions.IgnoreCase);
+            Match match = Regex.Match(value ?? "", @"^\s*([1-5]|10)\s+at once\s*$", RegexOptions.IgnoreCase);
             int count;
             return match.Success && int.TryParse(match.Groups[1].Value, out count) ? count : 2;
         }
@@ -2514,27 +2531,6 @@ namespace YTDownloader
         {
             string value;
             return values.TryGetValue(key, out value) ? value : null;
-        }
-
-        private void AddDefaultProfile()
-        {
-            FilterProfile profile = new FilterProfile("Default", new string[0]);
-            ConfigureDefaultProfile(profile);
-            filterProfiles.Add(profile);
-        }
-
-        private static void ConfigureDefaultProfile(FilterProfile profile)
-        {
-            profile.Rules.Clear();
-            profile.PresetRules.Clear();
-            profile.CustomRules.Clear();
-            profile.EmbedThumbnail = false;
-            profile.MetadataEnabled = false;
-            profile.CleanTitles = false;
-            profile.RemoveArtistPrefix = false;
-            profile.CookieBrowser = "Automatic";
-            profile.BitrateSetting = "Automatic";
-            profile.MetadataFields.Clear();
         }
 
         private void RefreshProfileSelector(string preferred)
@@ -2579,6 +2575,9 @@ namespace YTDownloader
             {
                 profileNameBox.Text = profile.Name;
                 thumbnailToggle.Checked = profile.EmbedThumbnail;
+                thumbnailSizeBox.SelectedIndex = 0;
+                SelectCombo(thumbnailSizeBox, profile.ThumbnailSize);
+                thumbnailSizeBox.Enabled = profile.EmbedThumbnail && !running;
                 metadataToggle.Checked = profile.MetadataEnabled;
                 titleFilterToggle.Checked = profile.CleanTitles;
                 removeArtistPrefixToggle.Checked = profile.RemoveArtistPrefix;
@@ -2633,8 +2632,7 @@ namespace YTDownloader
             int number = 1;
             string name;
             do { name = "New profile " + number++; } while (filterProfiles.Any(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase)));
-            FilterProfile profile = new FilterProfile(name, new string[0]);
-            ConfigureDefaultProfile(profile);
+            FilterProfile profile = new FilterProfile(name);
             filterProfiles.Add(profile);
             RefreshProfileSelector(name);
             profileNameBox.Focus();
@@ -2673,6 +2671,7 @@ namespace YTDownloader
             profile.CustomRules = filterRulesBox.Lines.ToList();
             profile.RebuildRules();
             profile.EmbedThumbnail = thumbnailToggle.Checked;
+            profile.ThumbnailSize = thumbnailSizeBox.Text;
             profile.MetadataEnabled = metadataToggle.Checked;
             profile.CleanTitles = titleFilterToggle.Checked;
             profile.RemoveArtistPrefix = removeArtistPrefixToggle.Checked;
@@ -2911,22 +2910,20 @@ namespace YTDownloader
         private sealed class FilterProfile
         {
             public string Name;
-            public List<string> Rules;
+            public List<string> Rules = new List<string>();
             public List<string> PresetRules = new List<string>();
             public List<string> CustomRules = new List<string>();
-            public bool EmbedThumbnail = true;
-            public bool MetadataEnabled = true;
-            public bool CleanTitles = true;
+            public bool EmbedThumbnail;
+            public string ThumbnailSize = "Highest available";
+            public bool MetadataEnabled;
+            public bool CleanTitles;
             public bool RemoveArtistPrefix;
             public string CookieBrowser = "Automatic";
             public string BitrateSetting = "Automatic";
-            public HashSet<string> MetadataFields = new HashSet<string>(new[]
-                { "Title", "Artist", "Album", "Date", "Description", "Source", "Genre", "Track", "Chapters" }, StringComparer.OrdinalIgnoreCase);
-            public FilterProfile(string name, IEnumerable<string> rules)
+            public HashSet<string> MetadataFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            public FilterProfile(string name)
             {
                 Name = name;
-                Rules = rules.ToList();
-                CustomRules = Rules.ToList();
             }
 
             public void RebuildRules()
@@ -3021,7 +3018,7 @@ namespace YTDownloader
             }
             else
             {
-                SetValue(currentValue + (e.Y < thumb.Top ? -visibleLines : visibleLines), true);
+                SetValue(currentValue + (e.Y < thumb.Top ? -visibleLines : visibleLines));
             }
             Invalidate();
         }
@@ -3035,7 +3032,7 @@ namespace YTDownloader
             int travel = Math.Max(1, track.Height - thumb.Height);
             int top = Math.Max(track.Top, Math.Min(track.Bottom - thumb.Height, e.Y - dragOffset));
             int value = (int)Math.Round((top - track.Top) * maximum / (double)travel);
-            SetValue(value, true);
+            SetValue(value);
         }
 
         protected override void OnMouseUp(MouseEventArgs e)
@@ -3049,7 +3046,7 @@ namespace YTDownloader
 
         protected override void OnMouseWheel(MouseEventArgs e)
         {
-            SetValue(currentValue - Math.Sign(e.Delta) * 3, true);
+            SetValue(currentValue - Math.Sign(e.Delta) * 3);
             base.OnMouseWheel(e);
         }
 
@@ -3066,13 +3063,13 @@ namespace YTDownloader
                 e.Graphics.FillPath(brush, path);
         }
 
-        private void SetValue(int value, bool notify)
+        private void SetValue(int value)
         {
             int clamped = Math.Max(0, Math.Min(maximum, value));
             if (clamped == currentValue) return;
             currentValue = clamped;
             Invalidate();
-            if (notify && ValueChanged != null) ValueChanged(this, EventArgs.Empty);
+            if (ValueChanged != null) ValueChanged(this, EventArgs.Empty);
         }
 
         private Rectangle TrackBounds()
@@ -3293,14 +3290,12 @@ namespace YTDownloader
         private int selectedIndex = -1;
         private ToolStripDropDown activePopup;
         public event EventHandler SelectedIndexChanged;
-        public bool CenterText { get; set; }
 
         public DarkDropDown()
         {
             BackColor = Surface;
             ForeColor = LightText;
             Cursor = Cursors.Hand;
-            CenterText = true;
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
         }
 
@@ -3354,12 +3349,9 @@ namespace YTDownloader
                 e.Graphics.FillPath(background, path);
                 e.Graphics.DrawPath(border, path);
             }
-            Rectangle textBounds = CenterText
-                ? new Rectangle(2, 0, Math.Max(0, Width - 4), Height)
-                : new Rectangle(10, 0, Math.Max(0, Width - 38), Height);
-            TextFormatFlags alignment = CenterText ? TextFormatFlags.HorizontalCenter : TextFormatFlags.Left;
+            Rectangle textBounds = new Rectangle(2, 0, Math.Max(0, Width - 4), Height);
             TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, Enabled ? ForeColor : Color.Gray,
-                alignment | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
             bool open = activePopup != null && activePopup.Visible;
             DrawChevron(e.Graphics, Width - 16, Height / 2, open, Enabled ? LightText : Color.Gray);
         }
@@ -3404,8 +3396,8 @@ namespace YTDownloader
             collapseItem.Font = Font;
             collapseItem.ForeColor = ForeColor;
             collapseItem.BackColor = Surface;
-            collapseItem.Padding = CenterText ? Padding.Empty : new Padding(8, 0, 4, 0);
-            collapseItem.TextAlign = CenterText ? ContentAlignment.MiddleCenter : ContentAlignment.MiddleLeft;
+            collapseItem.Padding = Padding.Empty;
+            collapseItem.TextAlign = ContentAlignment.MiddleCenter;
             collapseItem.Paint += delegate(object sender, PaintEventArgs e)
             {
                 DrawChevron(e.Graphics, collapseItem.Width - 16, collapseItem.Height / 2, true, LightText);
@@ -3422,8 +3414,8 @@ namespace YTDownloader
                 item.Font = Font;
                 item.ForeColor = ForeColor;
                 item.BackColor = Surface;
-                item.Padding = CenterText ? Padding.Empty : new Padding(8, 0, 4, 0);
-                item.TextAlign = CenterText ? ContentAlignment.MiddleCenter : ContentAlignment.MiddleLeft;
+                item.Padding = Padding.Empty;
+                item.TextAlign = ContentAlignment.MiddleCenter;
                 item.Click += delegate { SelectedIndex = captured; popup.Close(); };
                 popup.Items.Add(item);
             }
