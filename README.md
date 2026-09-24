@@ -20,8 +20,8 @@ A completely portable Windows application for downloading YouTube videos, audio,
 - **Playlist downloads:** download individual YouTube links or complete playlists.
 - **Smart audio downloads:** Automatic Audio Bitrate checks the source stream and avoids unnecessary re-encoding when possible. Available formats are MP3, M4A, FLAC, WAV, OGG, OPUS, and AAC.
 - **Video downloads up to 8K:** choose MP4, MKV, or WEBM with resolutions up to 4320p, or use Highest to select the best available quality.
-- **Up to 5 downloads at once:** choose between 1 and 5 parallel downloads, with 2 selected by default.
-- **Download Profile Creator:** save cookie source, automatic or fixed audio bitrate, thumbnail embedding, metadata fields, title cleanup, artist-prefix removal, and custom bracketed title tags in reusable profiles.
+- **Up to 10 downloads at once:** choose 1, 2, 3, 4, 5, or 10 parallel downloads, with 2 selected by default.
+- **Download Profile Creator:** save cookie source, automatic or fixed audio bitrate, thumbnail embedding and size, metadata fields, title cleanup, artist-prefix removal, and custom bracketed title tags in reusable profiles.
 - **Component update checker:** the Check For Updates button checks and updates yt-dlp, Deno, FFmpeg, and ffprobe. FFmpeg downloads are verified against the publisher's SHA-256 checksum; YT Downloader itself is not changed.
 
 ## Download
@@ -69,7 +69,7 @@ A fixed bitrate forces lossy conversion. Choosing a bitrate higher than the sour
 
 ## Download profiles
 
-Profiles store the cookie source, automatic or fixed audio bitrate, thumbnail embedding, metadata choices, and title-cleanup settings. The selected profile can be changed from the main window or the Profile Creator in Settings.
+Profiles store the cookie source, automatic or fixed audio bitrate, thumbnail embedding and size, metadata choices, and title-cleanup settings. The selected profile can be changed from the main window or the Profile Creator in Settings.
 
 Title cleanup can remove common bracketed labels, user-defined custom bracketed tags, and an artist prefix so `Bruno Mars - The Lazy Song` becomes `The Lazy Song`.
 
@@ -77,13 +77,19 @@ Metadata has a master switch and individual choices for title, artist/uploader, 
 
 The **Default** profile starts with title cleanup, thumbnails, and metadata disabled. Cookie selection remains set to **Automatic**.
 
+### Thumbnail size
+
+When thumbnail embedding is enabled, choose **Highest available**, **Large**, **Medium**, or **Small**. The setting is saved in each profile.
+
+Large, Medium, and Small select the closest thumbnail supplied by YouTube to 640, 320, or 120 pixels wide, respectively. The app does not resize or recompress images to achieve these sizes; yt-dlp may still convert the image format as required for embedding. Available dimensions vary by video, and the normal highest-available thumbnail is used if dimensions are unavailable. Thumbnail embedding is not enabled for WAV or raw AAC output.
+
 ## Cookies and privacy
 
 The app can ask yt-dlp to read cookies locally from Automatic, Firefox, Chrome, Edge, Brave, Opera, Vivaldi, or Chromium. Cookie use can also be disabled, although some YouTube downloads may then fail.
 
 The app itself does not read, store, upload, or write cookie values to its log. Relevant cookies are used by yt-dlp only in authenticated requests to YouTube/Google; they are not sent to the app developer or unrelated services.
 
-YouTube can associate authenticated downloads with the signed-in account. yt-dlp warns that accounts may be temporarily or permanently banned and suggests considering a throwaway account. Higher parallel-download settings also reach request limits faster, so 1 or 2 downloads at once are the safer defaults.
+YouTube can associate authenticated downloads with the signed-in account. yt-dlp warns that accounts may be temporarily or permanently banned and suggests considering a throwaway account. Higher parallel-download settings, especially 5 or 10 at once, also reach request limits faster, so 1 or 2 downloads at once are the safer defaults.
 
 See the [official yt-dlp cookie and account warning](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies).
 
@@ -97,6 +103,7 @@ YT Downloader/
 │   ├── ffmpeg.exe
 │   ├── ffprobe.exe
 │   ├── deno.exe
+│   ├── plugins/ (native-thumbnail selector)
 │   ├── settings.ini
 │   ├── YTD.log
 │   └── FailedDL_*.txt
@@ -115,6 +122,7 @@ Deno may create `Dependencies\DenoCache` while solving YouTube JavaScript challe
 | [FFmpeg](https://ffmpeg.org/) | Merging video and audio, conversion, and embedding metadata or thumbnails |
 | [ffprobe](https://ffmpeg.org/ffprobe.html) | Inspecting media streams, including source audio bitrate |
 | [Deno](https://deno.com/) | JavaScript runtime used by yt-dlp for YouTube challenge solving |
+| NativeThumbnail yt-dlp plugin (included source) | Selects existing thumbnails without an additional resizing or compression step |
 | .NET Framework / Windows Forms | Native Windows desktop interface |
 
 The Check For Updates button checks components only when pressed. yt-dlp and Deno use their official update mechanisms. FFmpeg and ffprobe are replaced together with the latest stable [Gyan Windows build](https://www.gyan.dev/ffmpeg/builds/) after its published SHA-256 checksum is verified.

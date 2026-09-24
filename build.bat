@@ -14,5 +14,7 @@ if not exist build\Dependencies\ffmpeg.exe copy /y ffmpeg.exe build\Dependencies
 if not exist build\Dependencies\ffprobe.exe copy /y ffprobe.exe build\Dependencies\ >nul || exit /b 1
 if not exist build\Dependencies\deno.exe copy /y deno.exe build\Dependencies\ >nul || exit /b 1
 if not exist build\Downloads mkdir build\Downloads
+if not exist build\Dependencies\plugins\native_thumbnail\yt_dlp_plugins\postprocessor mkdir build\Dependencies\plugins\native_thumbnail\yt_dlp_plugins\postprocessor
+copy /y src\plugins\native_thumbnail\yt_dlp_plugins\postprocessor\native_thumbnail.py build\Dependencies\plugins\native_thumbnail\yt_dlp_plugins\postprocessor\ >nul || exit /b 1
 echo Built build\YTDownloader.exe
 exit /b 0
