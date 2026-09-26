@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Launch animation, ~920ms. The logo assembles in the order the app works: a screen,
+  then a video on it, then somewhere to put it, then the transfer.
+
+  MainActivity holds the splash open for SPLASH_HOLD_MS so this can finish; without it
+  the app wins the race and the animation is cut off after a frame or two. Changing the
+  timings below means changing that constant too, or the splash ends up truncated again
+  or padded with dead air.
+
+  Every animated property starts from the value declared in ic_splash_logo.xml, so the
+  two files have to be edited together.
+-->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_splash_logo">
+
+    <target
+        android:name="badge"
+        android:animation="@animator/splash_badge" />
+    <target
+        android:name="badgePath"
+        android:animation="@animator/splash_badge_alpha" />
+
+    <target
+        android:name="mark"
+        android:animation="@animator/splash_mark" />
+    <target
+        android:name="markPath"
+        android:animation="@animator/splash_mark_alpha" />
+
+    <target
+        android:name="tray"
+        android:animation="@animator/splash_tray" />
+    <target
+        android:name="trayPath"
+        android:animation="@animator/splash_tray_alpha" />
+
+    <target
+        android:name="arrowClip"
+        android:animation="@animator/splash_arrow_clip" />
+
+</animated-vector>
