@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The badge arrives first: a screen, before there is anything on it.
+
+  Linear interpolation between the keyframes, not an easing curve — the overshoot is
+  carried by the 1.03 stop, so an interpolator on top would compound it.
+-->
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="340"
+    android:interpolator="@android:anim/linear_interpolator">
+
+    <propertyValuesHolder
+        android:propertyName="scaleX"
+        android:valueType="floatType">
+        <keyframe android:fraction="0" android:value="0.82" />
+        <keyframe android:fraction="0.7647" android:value="1.03" />
+        <keyframe android:fraction="1" android:value="1" />
+    </propertyValuesHolder>
+
+    <propertyValuesHolder
+        android:propertyName="scaleY"
+        android:valueType="floatType">
+        <keyframe android:fraction="0" android:value="0.82" />
+        <keyframe android:fraction="0.7647" android:value="1.03" />
+        <keyframe android:fraction="1" android:value="1" />
+    </propertyValuesHolder>
+
+</objectAnimator>
