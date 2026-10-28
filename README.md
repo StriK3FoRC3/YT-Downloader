@@ -1,10 +1,10 @@
 # YT Downloader
 <div align="center">
-    <img src="/Screenshot1.png" width="500px"</img> 
+    <img src="/Screenshot2.png" width="500px"</img> 
 </div>
 ‎ ‎ ‎ ‎ 
 <div align="center">
-    <img src="/Screenshot2.png" width="500px"</img> 
+    <img src="/Screenshot1.png" width="500px"</img> 
 </div>
 
 
