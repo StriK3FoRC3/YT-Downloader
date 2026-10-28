@@ -9,10 +9,12 @@
 
 
 # YT Downloader
-
+⚠️Disclaimer⚠️: This app was created with the help of ChatGPT/Codex. 
+If you don't like vibe coded programs, don't use it. Please report any bugs you find, and feel free to suggest new features.
+<br/>
+<br/>
+<br/>
 A completely portable Windows application for downloading YouTube videos, audio, and playlists with control over quality, metadata, title cleanup, and parallel downloads.
-
-⚠️Disclaimer⚠️: This app was created with the help of ChatGPT/Codex. If you don't like vibe coded programs, don't use it. Please report any bugs you find, and feel free to suggest new features. 
 
 ## Features
 
