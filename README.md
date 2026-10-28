@@ -17,6 +17,18 @@ If you don't like vibe coded programs, don't use it. Please report any bugs you 
 <br/>
 A completely portable Windows application for downloading YouTube videos, audio, and playlists with control over quality, metadata, title cleanup, and parallel downloads.
 
+## Refreshed desktop interface
+
+The main window defaults to 800 × 550, matching the original footprint, and remembers its resized dimensions for the next launch. It can still be enlarged for more activity space.
+
+The interface now uses the deej dark palette (`#111216` background, `#1A1C23` panels) with violet accents, pill switches, custom rounded scrollbars, segmented Audio/Video selectors, a dedicated link-entry card, clearer download controls, and helpful empty activity states. **Edit profiles** opens three sections: Download options, Metadata, and Title cleanup. All existing formats, playlist options, profiles, cookie choices, updates, failure reports, and parallel downloads remain available.
+
+After building, run `build\YTDownloader.exe`. Preferences retain their existing format; to reuse settings from a previous portable copy, copy its `Dependencies\settings.ini` into the new build's `Dependencies` folder while the app is closed.
+
+UI optimizations remove repeated rounded-region allocations on main-window resizing, avoid progress repaints when the value is unchanged, and dispose closed dropdown menus. These changes target interface overhead, not network download speed.
+
+Run `tests\run-ui-tests.bat` for local UI smoke checks and rendered previews. These cover mode switching, busy-state controls, settings persistence, metadata/title-cleanup enablement, empty states, duplicate links, and layout bounds. They do not perform live downloads or component updates. Mixed-DPI monitor behavior still needs manual testing.
+
 ## Features
 
 - **Completely portable:** the executable, dependencies, settings, logs, cache, and downloads stay inside the YT Downloader folder. No installer is required.
@@ -113,7 +125,7 @@ YT Downloader/
 └── Downloads/
 ```
 
-`settings.ini` stores preferences, profiles, toggles, selected formats, concurrency, and activity-column layout. Failed downloads are written to timestamped `FailedDL_*.txt` files and detailed diagnostics go to `YTD.log`.
+`settings.ini` stores preferences, profiles, toggles, selected formats, concurrency, window size, and activity-column layout. Failed downloads are written to timestamped `FailedDL_*.txt` files and detailed diagnostics go to `YTD.log`.
 
 Deno may create `Dependencies\DenoCache` while solving YouTube JavaScript challenges. All of these files remain inside the portable application directory.
 
@@ -153,3 +165,4 @@ YT Downloader is not affiliated with YouTube, Google, yt-dlp, FFmpeg, Deno, or G
 
 Image Converter is available under the [PolyForm Noncommercial License 1.0.0](LICENSE) You may use, modify, and distribute it for permitted noncommercial purposes. Commercial use is not granted by this license.
 The bundled third-party programs retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
