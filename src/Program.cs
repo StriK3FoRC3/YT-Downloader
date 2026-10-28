@@ -19,8 +19,8 @@ using System.Windows.Forms;
 [assembly: AssemblyDescription("YouTube video and playlist downloader")]
 [assembly: AssemblyCompany("StriK3FoRC3")]
 [assembly: AssemblyProduct("YT Downloader")]
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.2.0.0")]
+[assembly: AssemblyFileVersion("1.2.0.0")]
 
 namespace YTDownloader
 {
@@ -102,8 +102,8 @@ namespace YTDownloader
 
         public DarkForm()
         {
-            BackColor = Color.FromArgb(25, 25, 25);
-            ForeColor = Color.FromArgb(245, 245, 245);
+            BackColor = Color.FromArgb(17, 18, 22);
+            ForeColor = Color.FromArgb(235, 240, 249);
             chromeBorderColor = BackColor;
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
         }
@@ -117,13 +117,13 @@ namespace YTDownloader
 
     internal sealed class MainForm : DarkForm
     {
-        private static readonly Color Bg = Color.FromArgb(25, 25, 25);
-        private static readonly Color Panel = Color.FromArgb(35, 35, 35);
-        private static readonly Color PanelLight = Color.FromArgb(44, 44, 44);
-        private static readonly Color TextColor = Color.FromArgb(245, 245, 245);
-        private static readonly Color Muted = Color.FromArgb(180, 180, 180);
-        private static readonly Color Purple = Color.FromArgb(159, 0, 255);
-        private static readonly Color PurpleHover = Color.FromArgb(181, 55, 255);
+        private static readonly Color Bg = Color.FromArgb(17, 18, 22);
+        private static readonly Color Panel = Color.FromArgb(26, 28, 35);
+        private static readonly Color PanelLight = Color.FromArgb(35, 37, 46);
+        private static readonly Color TextColor = Color.FromArgb(235, 240, 249);
+        private static readonly Color Muted = Color.FromArgb(153, 147, 169);
+        private static readonly Color Purple = Color.FromArgb(124, 108, 245);
+        private static readonly Color PurpleHover = Color.FromArgb(154, 141, 255);
         private static readonly Color Green = Color.FromArgb(105, 210, 110);
         private static readonly Color Red = Color.FromArgb(244, 67, 54);
         private static readonly Color Blue = Color.FromArgb(82, 139, 255);
@@ -135,12 +135,18 @@ namespace YTDownloader
         private readonly Font profileIndicatorFont = new Font("Segoe UI", 16f, FontStyle.Regular, GraphicsUnit.Pixel);
         private readonly Font profileIndicatorBoldFont = new Font("Segoe UI", 16f, FontStyle.Bold, GraphicsUnit.Pixel);
 
-        private readonly TextBox urlBox = new TextBox();
+        private Label pageTitle;
+        private Label linksHeading;
+        private Label typeHeading;
+        private Label formatHeading;
+        private Label resolutionHeading;
+        private Label parallelHeading;
+        private readonly TextBox urlBox = new ModernTextBox();
         private Label subtitleLabel;
         private Label activeProfileLabel;
         private readonly DarkDropDown activeProfileBox = new DarkDropDown();
-        private readonly RadioButton audioMode = new RadioButton();
-        private readonly RadioButton videoMode = new RadioButton();
+        private readonly RadioButton audioMode = new ModernRadioButton();
+        private readonly RadioButton videoMode = new ModernRadioButton();
         private readonly DarkDropDown audioFormat = new DarkDropDown();
         private readonly DarkDropDown videoFormat = new DarkDropDown();
         private readonly DarkDropDown resolution = new DarkDropDown();
@@ -167,8 +173,8 @@ namespace YTDownloader
         private readonly TextBox profileNameBox = new TextBox();
         private readonly DarkRulesTextBox filterRulesBox = new DarkRulesTextBox();
         private readonly DarkVerticalScrollBar filterRulesScrollBar = new DarkVerticalScrollBar();
-        private readonly ListView downloads = new ListView();
-        private readonly ListView failures = new ListView();
+        private readonly ListView downloads = new ModernListView();
+        private readonly ListView failures = new ModernListView();
         private readonly DarkTabControl resultTabs = new DarkTabControl();
         private readonly Label status = new Label();
         private Label speedLabel;
@@ -234,17 +240,17 @@ namespace YTDownloader
             logPath = Path.Combine(dependenciesDir, "YTD.log");
 
             pasteButton = new StyledButton("Paste", Blue, boldFont);
-            clearLinksButton = new StyledButton("Clear", Red, boldFont);
+            clearLinksButton = new StyledButton("Clear", Gray, boldFont);
             openButton = new StyledButton("Open Downloads", Blue, boldFont);
-            downloadButton = new StyledButton("Download", Green, boldFont);
+            downloadButton = new StyledButton("Start download", Purple, boldFont);
             cancelButton = new StyledButton("Cancel", Red, boldFont);
             clearFailedButton = new StyledButton("Clear failed", Red, boldFont);
-            clearActivityButton = new StyledButton("Clear", Red, boldFont);
-            infoButton = new StyledButton("Info", Yellow, boldFont);
-            updateButton = new StyledButton("Check For Updates", Blue, boldFont);
-            settingsButton = new StyledButton("Settings", Purple, boldFont);
+            clearActivityButton = new StyledButton("Clear", Gray, boldFont);
+            infoButton = new StyledButton("Format guide", Gray, boldFont);
+            updateButton = new StyledButton("Check for updates", Gray, boldFont);
+            settingsButton = new StyledButton("Edit profiles", Gray, boldFont);
             newProfileButton = new StyledButton("New profile", Purple, boldFont);
-            saveProfileButton = new StyledButton("Save profile", Green, boldFont);
+            saveProfileButton = new StyledButton("Save profile", Purple, boldFont);
             deleteProfileButton = new StyledButton("Delete", Red, boldFont);
             closeSettingsButton = new StyledButton("Close", Blue, boldFont);
 
@@ -266,7 +272,7 @@ namespace YTDownloader
             WireEvents();
             UpdateMode();
             UpdateToolStatus();
-            WriteLog("Application started. Version 1.1.0. Cookie setting: " + cookieBrowserBox.Text + ". Detected default: " + DetectDefaultBrowserForCookies());
+            WriteLog("Application started. Version 1.2.0. Cookie setting: " + cookieBrowserBox.Text + ". Detected default: " + DetectDefaultBrowserForCookies());
         }
 
         private string FindTool(string name)
@@ -276,17 +282,17 @@ namespace YTDownloader
 
         private void BuildUi()
         {
-            Label title = MakeLabel("YT Downloader", titleFont, TextColor);
-            subtitleLabel = MakeLabel("Download videos, songs, and complete playlists in the format you want.", normalFont, Muted);
-            activeProfileLabel = MakeLabel("Profile:", profileIndicatorFont, Purple);
-            activeProfileLabel.TextAlign = ContentAlignment.MiddleRight;
+            Label title = pageTitle = MakeLabel("YT Downloader", titleFont, TextColor);
+            subtitleLabel = MakeLabel("Video, audio, or a whole playlist. Make it yours.", normalFont, Muted);
+            activeProfileLabel = MakeLabel("DOWNLOAD PROFILE", normalFont, Muted);
+            activeProfileLabel.TextAlign = ContentAlignment.MiddleLeft;
             activeProfileBox.Font = profileIndicatorBoldFont;
-            activeProfileBox.ForeColor = Green;
-            Label urlLabel = MakeLabel("YouTube links (one per line)", boldFont, TextColor);
-            Label typeLabel = MakeLabel("Download type", boldFont, TextColor);
-            Label formatLabel = MakeLabel("Format", boldFont, TextColor);
-            Label resolutionLabel = MakeLabel("Resolution", boldFont, TextColor);
-            Label simultaneousLabel = MakeLabel("Downloads", boldFont, TextColor);
+            activeProfileBox.ForeColor = TextColor;
+            Label urlLabel = linksHeading = MakeLabel("Add YouTube links  /  one per line", boldFont, TextColor);
+            Label typeLabel = typeHeading = MakeLabel("Download type", boldFont, TextColor);
+            Label formatLabel = formatHeading = MakeLabel("Format", boldFont, TextColor);
+            Label resolutionLabel = resolutionHeading = MakeLabel("Resolution", boldFont, TextColor);
+            Label simultaneousLabel = parallelHeading = MakeLabel("Parallel downloads", boldFont, TextColor);
             speedLabel = MakeLabel("-- MB/s", boldFont, Muted);
             speedLabel.TextAlign = ContentAlignment.MiddleCenter;
             elapsedLabel = MakeLabel("00:00", boldFont, Muted);
@@ -299,6 +305,8 @@ namespace YTDownloader
             urlBox.ForeColor = TextColor;
             urlBox.Font = normalFont;
             urlBox.AcceptsReturn = true;
+            urlBox.GotFocus += delegate { Invalidate(); };
+            urlBox.LostFocus += delegate { Invalidate(); };
 
             ConfigureRadio(audioMode, "Audio only");
             ConfigureRadio(videoMode, "Video");
@@ -369,46 +377,22 @@ namespace YTDownloader
                 openButton, resultTabs, status, speedLabel, elapsedLabel, progress, settingsButton, clearActivityButton,
                 downloadButton, cancelButton });
 
-            int titleWidth = TextRenderer.MeasureText(title.Text, title.Font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding).Width;
-            title.SetBounds(20, 10, titleWidth, 28);
-            infoButton.SetBounds(title.Right + 10, 8, 100, 32);
-            updateButton.SetBounds(infoButton.Right + 10, 8, 150, 32);
-            subtitleLabel.SetBounds(20, 42, 680, 21);
-            activeProfileLabel.SetBounds(560, 16, 52, 28);
-            activeProfileBox.SetBounds(618, 16, 100, 28);
-            settingsButton.SetBounds(730, 14, 90, 32);
-            urlLabel.SetBounds(20, 68, 260, 21);
-            urlBox.SetBounds(20, 92, 800, 62);
-            clearLinksButton.SetBounds(630, 58, 90, 32);
-            pasteButton.SetBounds(730, 58, 90, 32);
-            typeLabel.SetBounds(20, 168, 150, 21);
-            audioMode.SetBounds(20, 192, 110, 26);
-            videoMode.SetBounds(135, 192, 80, 26);
-            formatLabel.SetBounds(220, 168, 100, 21);
-            audioFormat.SetBounds(220, 191, 105, 28);
-            videoFormat.SetBounds(220, 191, 105, 28);
-            resolutionLabel.SetBounds(340, 168, 130, 21);
-            resolution.SetBounds(340, 191, 130, 28);
-            simultaneousLabel.SetBounds(485, 168, 105, 21);
-            simultaneousDownloads.SetBounds(485, 191, 105, 28);
-            openButton.SetBounds(604, 189, 160, 32);
-            resultTabs.SetBounds(20, 236, 744, 215);
-            downloads.SetBounds(0, 0, 842, 195);
-            downloads.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            clearActivityButton.SetBounds(640, 622, 90, 32);
-            failures.SetBounds(0, 0, 842, 195);
-            failures.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            clearFailedButton.SetBounds(700, 202, 125, 32);
-            clearFailedButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            status.SetBounds(20, 608, 580, 23);
-            speedLabel.SetBounds(500, 598, 130, 20);
-            elapsedLabel.SetBounds(640, 598, 90, 20);
-            progress.SetBounds(20, 636, 580, 18);
-            downloadButton.SetBounds(500, 622, 130, 32);
-            cancelButton.SetBounds(740, 622, 90, 32);
             cancelButton.Enabled = false;
+            downloadButton.Primary = true;
+            saveProfileButton.Primary = true;
+            urlBox.AccessibleName = "YouTube links, one per line";
+            urlBox.TabIndex = 0;
+            pasteButton.TabIndex = 1;
+            clearLinksButton.TabIndex = 2;
+            audioMode.TabIndex = 3;
+            videoMode.TabIndex = 4;
+            audioFormat.TabIndex = videoFormat.TabIndex = 5;
+            resolution.TabIndex = 6;
+            simultaneousDownloads.TabIndex = 7;
+            downloadButton.TabIndex = 8;
             BuildSettingsWindow();
             Resize += delegate { LayoutResponsive(); };
+            ResizeEnd += delegate { SavePreferences(); };
             LayoutResponsive();
         }
 
@@ -439,7 +423,7 @@ namespace YTDownloader
             Label nameLabel = MakeLabel("Profile name", boldFont, TextColor);
             Label bitrateLabel = MakeLabel("Audio Bitrate Settings", boldFont, TextColor);
             Label cleanupLabel = MakeLabel("Remove bracketed title tags", boldFont, TextColor);
-            Label helpLabel = MakeLabel("Selected tags are removed only when found inside (parentheses) or [square brackets], preserving the artist and real title.", normalFont, Muted);
+            Label helpLabel = MakeLabel("Remove matching (parentheses) and [brackets] while keeping the real title.", normalFont, Muted);
             Label customLabel = MakeLabel("Custom bracketed tags (one phrase per line)", boldFont, TextColor);
             LinkLabel customHelpLink = new LinkLabel();
             customHelpLink.Text = "What should I enter?";
@@ -493,39 +477,73 @@ namespace YTDownloader
             AddTitleFilterOption("Visualizer", new[] { "Visualizer" }, 18, 286, 160);
             AddTitleFilterOption("Audio", new[] { "Audio" }, 230, 286, 190);
             AddTitleFilterOption("HD / 4K", new[] { "HD", "4K" }, 470, 286, 150);
-            heading.SetBounds(18, 12, 240, 28);
-            profileLabel.SetBounds(18, 50, 130, 21);
-            filterProfileBox.SetBounds(18, 75, 220, 28);
-            nameLabel.SetBounds(255, 50, 130, 21);
-            profileNameBox.SetBounds(255, 78, 234, 22);
-            bitrateLabel.SetBounds(510, 50, 194, 21);
-            bitrateSettingsBox.SetBounds(510, 75, 194, 28);
-            optionsHeading.SetBounds(18, 116, 200, 21);
-            thumbnailToggle.SetBounds(18, 140, 165, 25);
-            metadataToggle.SetBounds(195, 140, 130, 25);
-            titleFilterToggle.SetBounds(360, 140, 150, 25);
-            cookieBrowserLabel.SetBounds(540, 116, 150, 21);
-            cookieBrowserBox.SetBounds(540, 140, 164, 28);
-            metadataLabel.SetBounds(18, 180, 180, 21);
-            allMetadataFieldsToggle.SetBounds(200, 178, 70, 25);
-            metadataTitleToggle.SetBounds(18, 204, 170, 25);
-            metadataArtistToggle.SetBounds(245, 204, 180, 25);
-            metadataAlbumToggle.SetBounds(490, 204, 180, 25);
-            metadataDateToggle.SetBounds(18, 232, 170, 25);
-            metadataDescriptionToggle.SetBounds(245, 232, 180, 25);
-            metadataSourceToggle.SetBounds(490, 232, 180, 25);
-            metadataGenreToggle.SetBounds(18, 260, 170, 25);
-            metadataTrackToggle.SetBounds(245, 260, 180, 25);
-            metadataChaptersToggle.SetBounds(490, 260, 180, 25);
-            cleanupLabel.SetBounds(18, 298, 195, 21);
-            allTitleTagsToggle.SetBounds(220, 296, 70, 25);
-            removeArtistPrefixToggle.SetBounds(360, 296, 344, 25);
-            helpLabel.SetBounds(18, 321, 690, 36);
-            foreach (TitleFilterOption option in titleFilterOptions) option.CheckBox.Top += 130;
-            customLabel.SetBounds(18, 443, 500, 21);
-            customHelpLink.SetBounds(18, 592, 202, 18);
-            filterRulesBox.SetBounds(18, 468, 704, 111);
-            filterRulesScrollBar.SetBounds(708, 468, 14, 111);
+            settingsWindow.Text = "Download profiles";
+            settingsWindow.ClientSize = new Size(760, 620);
+            settingsWindow.MinimumSize = new Size(776, 659);
+            heading.Text = "Make it your own.";
+            heading.SetBounds(24, 18, 500, 32);
+            profileLabel.Text = "Saved profile";
+            profileLabel.SetBounds(24, 68, 220, 22);
+            filterProfileBox.SetBounds(24, 98, 220, 36);
+            nameLabel.SetBounds(264, 68, 300, 22);
+            profileNameBox.SetBounds(274, 106, 444, 24);
+            DarkTabControl tabs = new DarkTabControl();
+            tabs.ItemSize = new Size(210, 38);
+            tabs.SizeMode = TabSizeMode.Fixed;
+            tabs.SetBounds(24, 156, 712, 390);
+            tabs.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            TabPage general = MakeTab("Download options");
+            TabPage meta = MakeTab("Metadata");
+            TabPage cleanup = MakeTab("Title cleanup");
+            tabs.TabPages.AddRange(new[] { general, meta, cleanup });
+            settingsWindow.Controls.Add(tabs);
+            general.Controls.AddRange(new Control[] { optionsHeading, bitrateLabel, bitrateSettingsBox, cookieBrowserLabel, cookieBrowserBox, thumbnailToggle, thumbnailSizeBox });
+            optionsHeading.Text = "Quality, artwork & authentication";
+            optionsHeading.SetBounds(20, 20, 500, 24);
+            bitrateLabel.Text = "Audio bitrate";
+            bitrateLabel.SetBounds(20, 68, 290, 24);
+            bitrateSettingsBox.SetBounds(20, 100, 300, 38);
+            cookieBrowserLabel.SetBounds(352, 68, 290, 24);
+            cookieBrowserBox.SetBounds(352, 100, 300, 38);
+            thumbnailToggle.SetBounds(20, 168, 300, 28);
+            Label thumbnailSizeLabel = MakeLabel("Thumbnail size", boldFont, TextColor);
+            general.Controls.Add(thumbnailSizeLabel);
+            thumbnailSizeLabel.SetBounds(352, 168, 290, 24);
+            thumbnailSizeBox.SetBounds(352, 204, 300, 38);
+            Label profileHint = MakeLabel("Options are saved to the selected profile. Choose it on the main window\nto reuse your settings for the next download.", normalFont, Muted);
+            general.Controls.Add(profileHint);
+            profileHint.SetBounds(20, 272, 640, 50);
+            meta.Controls.AddRange(new Control[] { metadataToggle, metadataLabel, allMetadataFieldsToggle,
+                metadataTitleToggle, metadataArtistToggle, metadataAlbumToggle, metadataDateToggle,
+                metadataDescriptionToggle, metadataSourceToggle, metadataGenreToggle, metadataTrackToggle, metadataChaptersToggle });
+            metadataToggle.Text = "Embed metadata";
+            metadataToggle.SetBounds(20, 22, 300, 28);
+            metadataLabel.Text = "Include these fields";
+            metadataLabel.SetBounds(20, 78, 300, 24);
+            allMetadataFieldsToggle.Text = "Select all";
+            allMetadataFieldsToggle.SetBounds(520, 76, 140, 28);
+            Control[] fields = { metadataTitleToggle, metadataArtistToggle, metadataAlbumToggle, metadataDateToggle,
+                metadataDescriptionToggle, metadataSourceToggle, metadataGenreToggle, metadataTrackToggle, metadataChaptersToggle };
+            for (int i = 0; i < fields.Length; i++) fields[i].SetBounds(20 + (i % 3) * 222, 124 + (i / 3) * 52, 210, 30);
+            cleanup.Controls.AddRange(new Control[] { titleFilterToggle, cleanupLabel, allTitleTagsToggle, removeArtistPrefixToggle,
+                helpLabel, customLabel, customHelpLink, filterRulesBox, filterRulesScrollBar });
+            titleFilterToggle.Text = "Clean up titles";
+            titleFilterToggle.SetBounds(20, 16, 220, 26);
+            removeArtistPrefixToggle.SetBounds(290, 16, 380, 26);
+            cleanupLabel.SetBounds(20, 54, 310, 24);
+            allTitleTagsToggle.Text = "Select all";
+            allTitleTagsToggle.SetBounds(520, 54, 140, 26);
+            helpLabel.SetBounds(20, 84, 640, 36);
+            for (int i = 0; i < titleFilterOptions.Count; i++)
+            {
+                Control box = titleFilterOptions[i].CheckBox;
+                cleanup.Controls.Add(box);
+                box.SetBounds(20 + (i % 3) * 222, 124 + (i / 3) * 32, 214, 26);
+            }
+            customLabel.SetBounds(20, 224, 410, 24);
+            customHelpLink.SetBounds(470, 224, 190, 24);
+            filterRulesBox.SetBounds(24, 260, 628, 68);
+            filterRulesScrollBar.SetBounds(654, 260, 14, 68);
             filterRulesScrollBar.Visible = false;
             filterRulesScrollBar.ValueChanged += delegate
             {
@@ -539,56 +557,20 @@ namespace YTDownloader
             filterRulesBox.SelectionChanged += delegate { UpdateFilterRulesScrollBar(); };
             filterRulesBox.ScrollPositionChanged += delegate { UpdateFilterRulesScrollBar(); };
             filterRulesBox.TextChanged += delegate { UpdateFilterRulesScrollBar(); };
-            newProfileButton.SetBounds(267, 590, 120, 32);
-            saveProfileButton.SetBounds(397, 590, 130, 32);
-            deleteProfileButton.SetBounds(537, 590, 85, 32);
-            closeSettingsButton.SetBounds(632, 590, 85, 32);
-            // Give thumbnail selection its own row without crowding the option switches.
-            foreach (Control control in settingsWindow.Controls)
-                if (control.Top >= 178) control.Top += 40;
-            Label thumbnailSizeLabel = MakeLabel("Thumbnail size", boldFont, TextColor);
-            thumbnailSizeLabel.SetBounds(18, 180, 130, 25);
-            thumbnailSizeBox.SetBounds(155, 178, 190, 28);
-            settingsWindow.Controls.Add(thumbnailSizeLabel);
-            settingsWindow.Controls.Add(thumbnailSizeBox);
-            settingsWindow.MinimumSize = new Size(720, 692);
-            settingsWindow.Size = new Size(740, 712);
-            settingsWindow.Paint += delegate(object sender, PaintEventArgs e)
+            tabs.SelectedIndexChanged += delegate { UpdateFilterRulesScrollBar(); };
+            foreach (TabPage page in tabs.TabPages)
+                foreach (Control control in page.Controls)
+                    if (control is Label || control is AccentCheckBox || control is LinkLabel) control.BackColor = Panel;
+            newProfileButton.SetBounds(24, 566, 122, 36);
+            deleteProfileButton.SetBounds(158, 566, 90, 36);
+            saveProfileButton.SetBounds(468, 566, 142, 36);
+            closeSettingsButton.SetBounds(622, 566, 114, 36);
+            foreach (Control button in new Control[] { newProfileButton, deleteProfileButton, saveProfileButton, closeSettingsButton })
+                button.Anchor = AnchorStyles.Bottom | (button == newProfileButton || button == deleteProfileButton ? AnchorStyles.Left : AnchorStyles.Right);
+            settingsWindow.KeyPreview = true;
+            settingsWindow.KeyDown += delegate(object sender, KeyEventArgs e)
             {
-                Rectangle profileOutline = profileNameBox.Bounds;
-                profileOutline.Inflate(2, 2);
-                DrawRoundedOutline(e.Graphics, profileOutline, 8, Purple);
-                int rulesWidth = Math.Max(100, settingsWindow.ClientSize.Width - 36);
-                Rectangle rulesOutline = new Rectangle(filterRulesBox.Left, filterRulesBox.Top, rulesWidth, filterRulesBox.Height);
-                rulesOutline.Inflate(2, 2);
-                DrawRoundedOutline(e.Graphics, rulesOutline, 8, Purple);
-            };
-            settingsWindow.Resize += delegate
-            {
-                int w = settingsWindow.ClientSize.Width;
-                int h = settingsWindow.ClientSize.Height;
-                int bitrateLeft = w - 214;
-                bitrateLabel.Left = bitrateLeft;
-                bitrateSettingsBox.Left = bitrateLeft;
-                profileNameBox.Width = Math.Max(160, bitrateLeft - profileNameBox.Left - 21);
-                cookieBrowserLabel.Left = w - 182;
-                cookieBrowserBox.Left = w - 182;
-                helpLabel.Width = w - 36;
-                customHelpLink.Left = 18;
-                customHelpLink.Width = 202;
-                filterRulesBox.Height = Math.Max(80, h - 562);
-                UpdateFilterRulesScrollBar();
-                int buttonTop = filterRulesBox.Bottom + 6;
-                customHelpLink.Top = buttonTop + 7;
-                newProfileButton.SetBounds(w - 475, buttonTop + 5, 120, 32);
-                saveProfileButton.SetBounds(w - 345, buttonTop + 5, 130, 32);
-                deleteProfileButton.SetBounds(w - 200, buttonTop + 5, 85, 32);
-                closeSettingsButton.SetBounds(w - 105, buttonTop + 5, 85, 32);
-                ApplyRoundedRegion(filterProfileBox, 8);
-                ApplyRoundedRegion(cookieBrowserBox, 8);
-                ApplyRoundedRegion(bitrateSettingsBox, 8);
-                ApplyRoundedRegion(profileNameBox, 8);
-                ApplyRoundedRegion(filterRulesBox, 8);
+                if (e.KeyCode == Keys.Escape) { SavePreferences(); settingsWindow.Hide(); e.Handled = true; }
             };
         }
 
@@ -772,57 +754,61 @@ namespace YTDownloader
         {
             base.OnPaint(e);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            DrawRoundedOutline(e.Graphics, urlBox.Bounds, 8, Purple);
-            DrawRoundedOutline(e.Graphics, resultTabs.Bounds, 9, Color.FromArgb(92, 92, 92));
-            DrawRoundedOutline(e.Graphics, progress.Bounds, 6, Color.FromArgb(92, 92, 92));
+            PaintCard(e.Graphics, new Rectangle(16, 66, ClientSize.Width - 32, 182));
+            PaintCard(e.Graphics, new Rectangle(16, 258, ClientSize.Width - 32, Math.Max(80, ClientSize.Height - 342)));
+            Rectangle input = urlBox.Bounds; input.Inflate(8, 6);
+            using (GraphicsPath path = CreateRoundedPath(input, 8))
+            using (SolidBrush brush = new SolidBrush(PanelLight)) e.Graphics.FillPath(brush, path);
+            DrawRoundedOutline(e.Graphics, input, 8, urlBox.Focused ? Purple : Color.FromArgb(48, 48, 59));
+        }
+
+        private static void PaintCard(Graphics graphics, Rectangle bounds)
+        {
+            using (GraphicsPath path = CreateRoundedPath(bounds, 12))
+            using (SolidBrush fill = new SolidBrush(Panel))
+            using (Pen border = new Pen(Color.FromArgb(48, 48, 59)))
+            { graphics.FillPath(fill, path); graphics.DrawPath(border, path); }
         }
 
         private void LayoutResponsive()
         {
+            if (pageTitle == null) return;
+            SuspendLayout();
             int width = ClientSize.Width;
             int bottom = ClientSize.Height;
-            urlBox.Width = width - 40;
-            pasteButton.Left = width - 110;
-            clearLinksButton.Left = pasteButton.Left - 100;
-            settingsButton.Left = width - 110;
+            pageTitle.SetBounds(18, 12, 190, 28);
+            subtitleLabel.Text = "Videos, audio & playlists.";
+            subtitleLabel.SetBounds(20, 40, 260, 20);
+            linksHeading.SetBounds(28, 80, 320, 22);
+            pasteButton.SetBounds(width - 112, 74, 84, 30);
+            clearLinksButton.SetBounds(width - 192, 74, 72, 30);
+            urlBox.SetBounds(36, 118, width - 72, 48);
+            urlBox.BackColor = PanelLight;
+            typeHeading.SetBounds(28, 186, 170, 20);
+            audioMode.SetBounds(28, 210, 100, 28);
+            videoMode.SetBounds(134, 210, 70, 28);
+            int col = (width - 240) / 3;
+            formatHeading.SetBounds(224, 186, col - 12, 20);
+            audioFormat.SetBounds(224, 208, col - 12, 30);
+            videoFormat.Bounds = audioFormat.Bounds;
+            resolutionHeading.SetBounds(224 + col, 186, col - 12, 20);
+            resolution.SetBounds(224 + col, 208, col - 12, 30);
+            parallelHeading.SetBounds(224 + col * 2, 186, col - 12, 20);
+            simultaneousDownloads.SetBounds(224 + col * 2, 208, col - 12, 30);
+            foreach (Control c in new Control[] { linksHeading, typeHeading, formatHeading, resolutionHeading, parallelHeading, audioMode, videoMode, pasteButton, clearLinksButton, audioFormat, videoFormat, resolution, simultaneousDownloads }) c.BackColor = Panel;
+            resultTabs.SetBounds(24, 266, width - 48, Math.Max(100, bottom - 358));
+            resultTabs.ItemSize = new Size(180, 28);
+            status.SetBounds(20, bottom - 76, width - 300, 22);
+            speedLabel.SetBounds(width - 264, bottom - 76, 140, 22);
+            elapsedLabel.SetBounds(width - 116, bottom - 76, 96, 22);
+            progress.SetBounds(20, bottom - 49, width - 40, 4);
+            openButton.SetBounds(20, bottom - 39, 146, 30);
+            clearActivityButton.SetBounds(174, bottom - 39, 110, 30);
+            clearActivityButton.Text = "Clear activity";
+            downloadButton.SetBounds(width - 258, bottom - 39, 146, 30);
+            cancelButton.SetBounds(width - 104, bottom - 39, 84, 30);
             LayoutProfileIndicator();
-            subtitleLabel.Width = Math.Max(100, settingsButton.Left - subtitleLabel.Left - 12);
-            openButton.Left = width - 180;
-            resultTabs.Width = width - 40;
-            resultTabs.Height = Math.Max(180, bottom - 316);
-            status.Top = bottom - 69;
-            status.Width = Math.Max(180, width - 390);
-            progress.Top = bottom - 41;
-            progress.Width = Math.Max(180, width - 390);
-            downloadButton.Left = width - 350;
-            downloadButton.Top = bottom - 48;
-            speedLabel.SetBounds(downloadButton.Left, downloadButton.Top - 24, downloadButton.Width, 20);
-            clearActivityButton.Left = width - 210;
-            clearActivityButton.Top = bottom - 48;
-            elapsedLabel.SetBounds(clearActivityButton.Left, clearActivityButton.Top - 24, clearActivityButton.Width, 20);
-            cancelButton.Left = width - 110;
-            cancelButton.Top = bottom - 48;
-            ApplyRoundedRegion(urlBox, 8);
-            ApplyRoundedRegion(audioFormat, 8);
-            ApplyRoundedRegion(videoFormat, 8);
-            ApplyRoundedRegion(resolution, 8);
-            ApplyRoundedRegion(simultaneousDownloads, 8);
-            ApplyRoundedRegion(activeProfileBox, 8);
-            ApplyRoundedRegion(downloads, 8);
-            ApplyRoundedRegion(failures, 8);
-            ApplyRoundedRegion(resultTabs, 9);
-            ApplyRoundedRegion(progress, 6);
-            infoButton.BringToFront();
-            updateButton.BringToFront();
-            settingsButton.BringToFront();
-            activeProfileBox.BringToFront();
-            clearLinksButton.BringToFront();
-            pasteButton.BringToFront();
-            ApplyRoundedRegion(filterProfileBox, 8);
-            ApplyRoundedRegion(cookieBrowserBox, 8);
-            ApplyRoundedRegion(bitrateSettingsBox, 8);
-            ApplyRoundedRegion(profileNameBox, 8);
-            ApplyRoundedRegion(filterRulesBox, 8);
+            ResumeLayout(false);
             Invalidate();
         }
 
@@ -927,6 +913,7 @@ namespace YTDownloader
             sessionFailureReportWritten = false;
             SetBusy(true);
             downloads.Items.Clear();
+            EnsureColumnsFit(downloads);
             progress.Value = 0;
             currentCombinedSpeed = 0.0;
             sessionElapsed.Restart();
@@ -2207,7 +2194,7 @@ namespace YTDownloader
                 ? SendMessage(filterRulesBox.Handle, 0x00CE, IntPtr.Zero, IntPtr.Zero).ToInt32()
                 : 0;
             bool needed = maximum > 0;
-            int fullWidth = Math.Max(100, settingsWindow.ClientSize.Width - 36);
+            int fullWidth = Math.Max(100, filterRulesBox.Parent.ClientSize.Width - 48);
             filterRulesBox.Width = fullWidth - (needed ? 16 : 0);
             filterRulesScrollBar.SetBounds(filterRulesBox.Left + fullWidth - 14, filterRulesBox.Top, 14, filterRulesBox.Height);
             filterRulesScrollBar.SetMetrics(maximum, Math.Min(currentLine, maximum), visibleLines, totalLines);
@@ -2235,6 +2222,13 @@ namespace YTDownloader
 
         private void ConfigureList(ListView list, string[] columns)
         {
+            Label empty = MakeLabel(list == downloads ? "Your downloads will appear here.\nAdd a link above, choose a format, and start downloading." : "No failed downloads.\nAny downloads that need attention will appear here.", normalFont, Muted);
+            empty.TextAlign = ContentAlignment.MiddleCenter;
+            empty.BackColor = Panel;
+            empty.AutoSize = false;
+            empty.Tag = "empty-state";
+            list.Controls.Add(empty);
+            list.Resize += delegate { empty.SetBounds(12, 38, Math.Max(1, list.ClientSize.Width - 24), Math.Max(1, list.ClientSize.Height - 50)); };
             list.View = View.Details;
             list.FullRowSelect = true;
             list.HideSelection = false;
@@ -2286,6 +2280,8 @@ namespace YTDownloader
 
         private void EnsureColumnsFit(ListView list, int preservedColumnIndex)
         {
+            foreach (Control child in list.Controls)
+                if (object.Equals(child.Tag, "empty-state")) child.Visible = list.Items.Count == 0;
             if (fittingColumns || list.Columns.Count == 0 || list.ClientSize.Width < 100) return;
             fittingColumns = true;
             try
@@ -2369,7 +2365,7 @@ namespace YTDownloader
             {
                 e.Graphics.SetClip(e.Bounds);
                 bool selected = e.Item.Selected;
-                Color background = selected ? Color.FromArgb(75, 38, 96) : Panel;
+                Color background = selected ? Color.FromArgb(49, 48, 79) : Panel;
                 using (SolidBrush brush = new SolidBrush(background)) e.Graphics.FillRectangle(brush, e.Bounds);
                 using (Pen separator = new Pen(Color.FromArgb(60, 60, 60))) e.Graphics.DrawLine(separator, e.Bounds.Right - 1, e.Bounds.Top, e.Bounds.Right - 1, e.Bounds.Bottom);
                 Rectangle textBounds = new Rectangle(e.Bounds.Left + 12, e.Bounds.Top, Math.Max(0, e.Bounds.Width - 24), e.Bounds.Height);
@@ -2391,6 +2387,16 @@ namespace YTDownloader
                     .Where(x => x.Contains("="))
                     .Select(x => new { Position = x.IndexOf('='), Line = x })
                     .ToDictionary(x => x.Line.Substring(0, x.Position), x => x.Line.Substring(x.Position + 1), StringComparer.OrdinalIgnoreCase);
+                int savedWidth, savedHeight;
+                if (int.TryParse(GetValue(values, "WindowWidth"), out savedWidth)
+                    && int.TryParse(GetValue(values, "WindowHeight"), out savedHeight)
+                    && savedWidth > 0 && savedHeight > 0)
+                {
+                    Size available = Screen.FromControl(this).WorkingArea.Size;
+                    Size = new Size(
+                        Math.Max(MinimumSize.Width, Math.Min(savedWidth, available.Width)),
+                        Math.Max(MinimumSize.Height, Math.Min(savedHeight, available.Height)));
+                }
                 int profileCount;
                 if (int.TryParse(GetValue(values, "ProfileCount"), out profileCount) && profileCount > 0)
                 {
@@ -2440,8 +2446,13 @@ namespace YTDownloader
             {
                 string directory = Path.GetDirectoryName(settingsPath);
                 Directory.CreateDirectory(directory);
+                Size windowSize = WindowState == FormWindowState.Normal ? Size : RestoreBounds.Size;
                 List<string> lines = new List<string>
                 {
+                    "[Window]",
+                    "WindowWidth=" + windowSize.Width,
+                    "WindowHeight=" + windowSize.Height,
+                    "",
                     "[Download defaults]",
                     "Mode=" + (videoMode.Checked ? "Video" : "Audio"),
                     "AudioFormat=" + audioFormat.Text,
@@ -2614,17 +2625,12 @@ namespace YTDownloader
         private void LayoutProfileIndicator()
         {
             if (activeProfileLabel == null || settingsButton == null) return;
-            const int gap = 2;
-            int prefixWidth = TextRenderer.MeasureText(activeProfileLabel.Text, activeProfileLabel.Font).Width;
-            int right = settingsButton.Left - 10;
-            int available = Math.Max(0, right - updateButton.Right - 10);
-            prefixWidth = Math.Min(prefixWidth, available);
-            int selectorWidth = Math.Min(175, Math.Max(0, available - prefixWidth - gap));
-            int left = right - prefixWidth - gap - selectorWidth;
-            activeProfileLabel.SetBounds(left, 16, prefixWidth, 28);
-            activeProfileBox.SetBounds(left + prefixWidth + gap, 16, selectorWidth, 28);
-            activeProfileLabel.BringToFront();
-            activeProfileBox.BringToFront();
+            activeProfileLabel.Visible = false;
+            int left = ClientSize.Width - 558;
+            infoButton.SetBounds(left, 14, 112, 30);
+            updateButton.SetBounds(left + 120, 14, 146, 30);
+            activeProfileBox.SetBounds(left + 274, 14, 160, 30);
+            settingsButton.SetBounds(left + 442, 14, 96, 30);
         }
 
         private void CreateProfile()
@@ -2952,6 +2958,127 @@ namespace YTDownloader
         }
     }
 
+    internal sealed class ModernRadioButton : RadioButton
+    {
+        public ModernRadioButton() { SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true); Cursor = Cursors.Hand; }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            e.Graphics.Clear(BackColor);
+            Rectangle r = new Rectangle(1, 1, Width - 3, Height - 3);
+            using (GraphicsPath p = new GraphicsPath())
+            {
+                const int d = 12;
+                p.AddArc(r.Left,r.Top,d,d,180,90); p.AddArc(r.Right-d,r.Top,d,d,270,90);
+                p.AddArc(r.Right-d,r.Bottom-d,d,d,0,90); p.AddArc(r.Left,r.Bottom-d,d,d,90,90); p.CloseFigure();
+                using (SolidBrush fill = new SolidBrush(Checked ? Color.FromArgb(56, 47, 86) : Color.FromArgb(35,37,46))) e.Graphics.FillPath(fill,p);
+                using (Pen border = new Pen(Checked || Focused ? Color.FromArgb(124,108,245) : Color.FromArgb(48,48,59))) e.Graphics.DrawPath(border,p);
+            }
+            TextRenderer.DrawText(e.Graphics,Text,Font,r,Enabled ? ForeColor : Color.Gray,TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+        }
+        protected override void OnCheckedChanged(EventArgs e) { base.OnCheckedChanged(e); Invalidate(); }
+        protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
+        protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+    }
+
+    internal sealed class ModernTextBox : TextBox
+    {
+        private readonly DarkVerticalScrollBar scrollbar = new DarkVerticalScrollBar();
+        private bool syncing;
+        public ModernTextBox()
+        {
+            Controls.Add(scrollbar); scrollbar.TabStop = false;
+            scrollbar.ValueChanged += delegate {
+                if (!IsHandleCreated || syncing) return;
+                int first = SendMessage(Handle, 0x00CE, IntPtr.Zero, IntPtr.Zero).ToInt32();
+                SendMessage(Handle, 0x00B6, IntPtr.Zero, new IntPtr(scrollbar.Value - first));
+                SyncScroll();
+            };
+        }
+        private void SyncScroll()
+        {
+            if (!IsHandleCreated || syncing || scrollbar == null) return;
+            syncing = true;
+            try {
+                int total = SendMessage(Handle, 0x00BA, IntPtr.Zero, IntPtr.Zero).ToInt32();
+                int visible = Math.Max(1, ClientSize.Height / Math.Max(1, Font.Height));
+                int first = SendMessage(Handle, 0x00CE, IntPtr.Zero, IntPtr.Zero).ToInt32();
+                scrollbar.Visible = total > visible;
+                scrollbar.SetBounds(Math.Max(0, ClientSize.Width - 14), 0, 14, ClientSize.Height);
+                scrollbar.SetMetrics(Math.Max(0, total - visible), first, visible, total);
+                scrollbar.BringToFront();
+            } finally { syncing = false; }
+        }
+        protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); SetTextArea(); SyncScroll(); }
+        protected override void OnResize(EventArgs e) { base.OnResize(e); SetTextArea(); SyncScroll(); }
+        private void SetTextArea()
+        {
+            if (!IsHandleCreated || !Multiline) return;
+            NativeRect rect = new NativeRect { Left = 0, Top = 0, Right = Math.Max(1, ClientSize.Width - 18), Bottom = ClientSize.Height };
+            SendMessageRect(Handle, 0x00B3, IntPtr.Zero, ref rect);
+        }
+        protected override void OnTextChanged(EventArgs e) { base.OnTextChanged(e); SyncScroll(); }
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            int first = SendMessage(Handle,0x00CE,IntPtr.Zero,IntPtr.Zero).ToInt32();
+            int total = SendMessage(Handle,0x00BA,IntPtr.Zero,IntPtr.Zero).ToInt32();
+            int visible = Math.Max(1,ClientSize.Height / Math.Max(1,Font.Height));
+            int next = Math.Max(0,Math.Min(Math.Max(0,total-visible),first-Math.Sign(e.Delta)*3));
+            SendMessage(Handle,0x00B6,IntPtr.Zero,new IntPtr(next-first)); SyncScroll();
+        }
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if (m.Msg == 0x0100 || m.Msg == 0x0101 || m.Msg == 0x0102 || m.Msg == 0x000C || m.Msg == 0x0302 || m.Msg == 0x0202 || m.Msg == 0x0115 || m.Msg == 0x00B6) SyncScroll();
+        }
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private struct NativeRect { public int Left, Top, Right, Bottom; }
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint="SendMessageW")]
+        private static extern IntPtr SendMessageRect(IntPtr h,int m,IntPtr w,ref NativeRect rect);
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr h,int m,IntPtr w,IntPtr l);
+    }
+
+    internal sealed class ModernListView : ListView
+    {
+        private readonly DarkVerticalScrollBar scrollbar = new DarkVerticalScrollBar();
+        private bool syncing;
+        public ModernListView()
+        {
+            Controls.Add(scrollbar); scrollbar.TabStop = false;
+            scrollbar.ValueChanged += delegate {
+                if (syncing || Items.Count == 0 || !IsHandleCreated) return;
+                int top = SendMessage(Handle, 0x1027, IntPtr.Zero, IntPtr.Zero).ToInt32();
+                int rowHeight = Math.Max(1, GetItemRect(0).Height);
+                SendMessage(Handle, 0x1014, IntPtr.Zero, new IntPtr((scrollbar.Value - top) * rowHeight));
+                SyncScroll();
+            };
+        }
+        private void SyncScroll()
+        {
+            if (!IsHandleCreated || syncing || scrollbar == null) return;
+            syncing = true;
+            try {
+                int page = Math.Max(1,SendMessage(Handle,0x1028,IntPtr.Zero,IntPtr.Zero).ToInt32());
+                int top = SendMessage(Handle,0x1027,IntPtr.Zero,IntPtr.Zero).ToInt32();
+                ShowScrollBar(Handle, 1, false);
+                scrollbar.Visible = Items.Count > page;
+                scrollbar.SetBounds(Math.Max(0,ClientSize.Width-14), 28, 14, Math.Max(1,ClientSize.Height-28));
+                scrollbar.SetMetrics(Math.Max(0,Items.Count-page), top, page, Items.Count);
+                scrollbar.BringToFront();
+            } finally { syncing = false; }
+        }
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if(m.Msg == 0x000F || m.Msg == 0x0005 || m.Msg == 0x020A || m.Msg == 0x0100 || m.Msg == 0x1014 || m.Msg == 0x1008 || m.Msg == 0x1009) SyncScroll();
+        }
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr h,int m,IntPtr w,IntPtr l);
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool ShowScrollBar(IntPtr h,int bar,bool show);
+    }
+
     internal sealed class DarkRulesTextBox : RichTextBox
     {
         private const int EmLineScroll = 0x00B6;
@@ -2970,10 +3097,10 @@ namespace YTDownloader
 
     internal sealed class DarkVerticalScrollBar : Control
     {
-        private static readonly Color TrackColor = Color.FromArgb(44, 44, 44);
-        private static readonly Color ThumbColor = Color.FromArgb(92, 92, 92);
-        private static readonly Color ThumbHoverColor = Color.FromArgb(118, 78, 142);
-        private static readonly Color Accent = Color.FromArgb(159, 0, 255);
+        private static readonly Color TrackColor = Color.FromArgb(35, 37, 46);
+        private static readonly Color ThumbColor = Color.FromArgb(68, 67, 78);
+        private static readonly Color ThumbHoverColor = Color.FromArgb(111, 104, 127);
+        private static readonly Color Accent = Color.FromArgb(124, 108, 245);
         private int maximum;
         private int currentValue;
         private int visibleLines = 1;
@@ -3053,10 +3180,7 @@ namespace YTDownloader
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            e.Graphics.Clear(TrackColor);
-            Rectangle track = TrackBounds();
-            using (GraphicsPath path = RoundedPath(track, 4))
-            using (SolidBrush brush = new SolidBrush(Color.FromArgb(35, 35, 35))) e.Graphics.FillPath(brush, path);
+            e.Graphics.Clear(Parent == null ? TrackColor : Parent.BackColor);
             Rectangle thumb = ThumbBounds();
             using (GraphicsPath path = RoundedPath(thumb, 4))
             using (SolidBrush brush = new SolidBrush(dragging ? Accent : (hovering ? ThumbHoverColor : ThumbColor)))
@@ -3142,8 +3266,8 @@ namespace YTDownloader
             finally { System.Runtime.InteropServices.Marshal.FreeHGlobal(memory); }
             if (right >= client.Right) return;
             using (Graphics graphics = Graphics.FromHwnd(TargetHandle))
-            using (SolidBrush background = new SolidBrush(Color.FromArgb(44, 44, 44)))
-            using (SolidBrush accent = new SolidBrush(Color.FromArgb(159, 0, 255)))
+            using (SolidBrush background = new SolidBrush(Color.FromArgb(35, 37, 46)))
+            using (SolidBrush accent = new SolidBrush(Color.FromArgb(124, 108, 245)))
             {
                 graphics.FillRectangle(background, right, 0, client.Right - right, client.Bottom);
                 graphics.FillRectangle(accent, right, Math.Max(0, client.Bottom - 2), client.Right - right, 2);
@@ -3180,7 +3304,7 @@ namespace YTDownloader
         public int Value
         {
             get { return currentValue; }
-            set { currentValue = Math.Max(0, Math.Min(maximum, value)); Invalidate(); }
+            set { int next = Math.Max(0, Math.Min(maximum, value)); if (next == currentValue) return; currentValue = next; Invalidate(); }
         }
 
         public DarkProgressBar()
@@ -3216,8 +3340,7 @@ namespace YTDownloader
 
     internal sealed class AccentCheckBox : Control
     {
-        private static readonly Color Accent = Color.FromArgb(159, 0, 255);
-        private static readonly Color Surface = Color.FromArgb(44, 44, 44);
+        private static readonly Color Accent = Color.FromArgb(124, 108, 245);
         private bool isChecked;
         public event EventHandler CheckedChanged;
 
@@ -3243,7 +3366,7 @@ namespace YTDownloader
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
-            if (Enabled && e.Button == MouseButtons.Left) Checked = !Checked;
+            if (Enabled && e.Button == MouseButtons.Left) { Focus(); Checked = !Checked; }
         }
 
         protected override void OnKeyDown(KeyEventArgs e)
@@ -3255,21 +3378,35 @@ namespace YTDownloader
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            Rectangle box = new Rectangle(1, (Height - 16) / 2, 16, 16);
-            using (GraphicsPath path = RoundedBox(box, 4))
-            using (SolidBrush brush = new SolidBrush(Checked ? Accent : Surface)) e.Graphics.FillPath(brush, path);
-            if (Checked)
-            {
-                using (Pen pen = new Pen(Color.White, 2f))
-                {
-                    pen.StartCap = LineCap.Round; pen.EndCap = LineCap.Round;
-                    e.Graphics.DrawLines(pen, new[] { new Point(box.Left + 4, box.Top + 8), new Point(box.Left + 7, box.Top + 11), new Point(box.Left + 13, box.Top + 5) });
-                }
-            }
-            Rectangle textBounds = new Rectangle(23, 0, Math.Max(0, Width - 23), Height);
-            TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, Enabled ? ForeColor : Color.Gray,
+            Rectangle track = new Rectangle(1, (Height - 18) / 2, 32, 18);
+            Color fill = !Enabled ? Color.FromArgb(43, 44, 53) : (Checked ? Accent : Color.FromArgb(53, 54, 65));
+            using (GraphicsPath path = RoundedBox(track, 9))
+            using (SolidBrush brush = new SolidBrush(fill))
+            using (Pen border = new Pen(Focused ? Color.FromArgb(190, 177, 255) : (hovering && Enabled ? Color.FromArgb(111, 104, 127) : fill)))
+            { e.Graphics.FillPath(brush, path); e.Graphics.DrawPath(border, path); }
+            using (SolidBrush knob = new SolidBrush(Enabled ? Color.FromArgb(241, 240, 247) : Color.FromArgb(106, 104, 119)))
+                e.Graphics.FillEllipse(knob, track.Left + (Checked ? 17 : 3), track.Top + 3, 12, 12);
+            Rectangle textBounds = new Rectangle(42, 0, Math.Max(0, Width - 42), Height);
+            TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, Enabled ? ForeColor : Color.FromArgb(113, 109, 128),
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
         }
+
+        protected override AccessibleObject CreateAccessibilityInstance() { return new SwitchAccessibleObject(this); }
+        private sealed class SwitchAccessibleObject : ControlAccessibleObject
+        {
+            private readonly AccentCheckBox owner;
+            public SwitchAccessibleObject(AccentCheckBox control) : base(control) { owner = control; }
+            public override AccessibleRole Role { get { return AccessibleRole.CheckButton; } }
+            public override AccessibleStates State { get { return base.State | (owner.Checked ? AccessibleStates.Checked : AccessibleStates.None); } }
+            public override string DefaultAction { get { return "Toggle"; } }
+            public override void DoDefaultAction() { if (owner.Enabled) owner.Checked = !owner.Checked; }
+        }
+
+        private bool hovering;
+        protected override void OnMouseEnter(EventArgs e) { hovering = true; Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { hovering = false; Invalidate(); base.OnMouseLeave(e); }
+        protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
+        protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
 
         private static GraphicsPath RoundedBox(Rectangle bounds, int radius)
         {
@@ -3282,10 +3419,10 @@ namespace YTDownloader
 
     internal sealed class DarkDropDown : Control
     {
-        private static readonly Color Surface = Color.FromArgb(44, 44, 44);
-        private static readonly Color Hover = Color.FromArgb(75, 38, 96);
-        private static readonly Color Accent = Color.FromArgb(159, 0, 255);
-        private static readonly Color LightText = Color.FromArgb(245, 245, 245);
+        private static readonly Color Surface = Color.FromArgb(35, 37, 46);
+        private static readonly Color Hover = Color.FromArgb(49, 48, 79);
+        private static readonly Color Accent = Color.FromArgb(124, 108, 245);
+        private static readonly Color LightText = Color.FromArgb(235, 240, 249);
         private readonly List<string> entries = new List<string>();
         private int selectedIndex = -1;
         private ToolStripDropDown activePopup;
@@ -3293,7 +3430,6 @@ namespace YTDownloader
 
         public DarkDropDown()
         {
-            BackColor = Surface;
             ForeColor = LightText;
             Cursor = Cursors.Hand;
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
@@ -3339,21 +3475,28 @@ namespace YTDownloader
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            Color parentColor = Parent == null ? Surface : Parent.BackColor;
-            e.Graphics.Clear(parentColor);
+            e.Graphics.Clear(BackColor);
             RectangleF bounds = new RectangleF(0.5f, 0.5f, Math.Max(1f, Width - 1f), Math.Max(1f, Height - 1f));
             using (GraphicsPath path = CreateRoundedPath(bounds, 7f))
-            using (SolidBrush background = new SolidBrush(Enabled ? Surface : Color.FromArgb(55, 55, 55)))
-            using (Pen border = new Pen(Accent, 1f))
+            using (SolidBrush background = new SolidBrush(Enabled ? Surface : Color.FromArgb(29, 30, 38)))
+            using (Pen border = new Pen(Focused ? Accent : Color.FromArgb(48, 48, 59), 1f))
             {
                 e.Graphics.FillPath(background, path);
                 e.Graphics.DrawPath(border, path);
             }
-            Rectangle textBounds = new Rectangle(2, 0, Math.Max(0, Width - 4), Height);
+            Rectangle textBounds = new Rectangle(12, 0, Math.Max(0, Width - 40), Height);
             TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, Enabled ? ForeColor : Color.Gray,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
             bool open = activePopup != null && activePopup.Visible;
             DrawChevron(e.Graphics, Width - 16, Height / 2, open, Enabled ? LightText : Color.Gray);
+        }
+
+        protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
+        protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && activePopup != null) { activePopup.Dispose(); activePopup = null; }
+            base.Dispose(disposing);
         }
 
         private static GraphicsPath CreateRoundedPath(RectangleF bounds, float radius)
@@ -3388,7 +3531,13 @@ namespace YTDownloader
             popup.Margin = Padding.Empty;
             popup.BackColor = Surface;
             popup.Renderer = new DarkMenuRenderer();
-            popup.Closed += delegate { if (ReferenceEquals(activePopup, popup)) activePopup = null; Invalidate(); };
+            popup.Closed += delegate
+            {
+                if (ReferenceEquals(activePopup, popup)) activePopup = null;
+                Invalidate();
+                if (IsHandleCreated && !IsDisposed) BeginInvoke((Action)delegate { popup.Dispose(); });
+                else popup.Dispose();
+            };
             ToolStripMenuItem collapseItem = new ToolStripMenuItem(Text);
             collapseItem.AutoSize = false;
             collapseItem.Width = Width - 4;
@@ -3464,10 +3613,10 @@ namespace YTDownloader
 
     internal sealed class DarkTabControl : TabControl
     {
-        private static readonly Color DarkBackground = Color.FromArgb(35, 35, 35);
-        private static readonly Color DarkTab = Color.FromArgb(44, 44, 44);
-        private static readonly Color Accent = Color.FromArgb(159, 0, 255);
-        private static readonly Color LightText = Color.FromArgb(245, 245, 245);
+        private static readonly Color DarkBackground = Color.FromArgb(26, 28, 35);
+        private static readonly Color DarkTab = Color.FromArgb(35, 37, 46);
+        private static readonly Color Accent = Color.FromArgb(124, 108, 245);
+        private static readonly Color LightText = Color.FromArgb(235, 240, 249);
         private readonly Font tabFont = new Font("Segoe UI", 14f, FontStyle.Bold, GraphicsUnit.Pixel);
 
         public DarkTabControl()
@@ -3479,8 +3628,8 @@ namespace YTDownloader
         protected override void WndProc(ref Message message)
         {
             base.WndProc(ref message);
-            if (message.Msg != 0x000F || Width <= 0 || Height <= 0) return;
-            using (Graphics graphics = Graphics.FromHwnd(Handle))
+            if ((message.Msg != 0x000F && message.Msg != 0x0318) || Width <= 0 || Height <= 0) return;
+            using (Graphics graphics = message.Msg == 0x0318 ? Graphics.FromHdc(message.WParam) : Graphics.FromHwnd(Handle))
             {
                 graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 int headerBottom = TabCount > 0 ? GetTabRect(0).Bottom + 3 : 32;
@@ -3497,7 +3646,8 @@ namespace YTDownloader
                     Rectangle bounds = GetTabRect(index);
                     bounds.Inflate(-1, -1);
                     bool selected = index == SelectedIndex;
-                    using (SolidBrush brush = new SolidBrush(selected ? Accent : DarkTab)) graphics.FillRectangle(brush, bounds);
+                    using (SolidBrush brush = new SolidBrush(selected ? DarkTab : DarkBackground)) graphics.FillRectangle(brush, bounds);
+                    if (selected) using (SolidBrush accent = new SolidBrush(Accent)) graphics.FillRectangle(accent, bounds.Left + 16, bounds.Bottom - 3, bounds.Width - 32, 3);
                     TextRenderer.DrawText(graphics, TabPages[index].Text, tabFont, bounds, LightText,
                         TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
                 }
@@ -3515,7 +3665,7 @@ namespace YTDownloader
     {
         private readonly Color baseColor;
         private const int CornerRadius = 6;
-        private const int StandardHeight = 32;
+        public bool Primary { get; set; }
         private bool hovering;
         private bool pressed;
         public StyledButton(string text, Color color, Font font)
@@ -3526,7 +3676,7 @@ namespace YTDownloader
         }
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
         {
-            base.SetBoundsCore(x, y, width, StandardHeight, specified | BoundsSpecified.Height);
+            base.SetBoundsCore(x, y, width, height, specified);
         }
         protected override void OnMouseEnter(EventArgs e) { hovering = true; Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { hovering = false; pressed = false; Invalidate(); base.OnMouseLeave(e); }
@@ -3542,23 +3692,23 @@ namespace YTDownloader
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            e.Graphics.Clear(Parent == null ? Color.FromArgb(25, 25, 25) : Parent.BackColor);
+            e.Graphics.Clear(BackColor);
             using (GraphicsPath path = ButtonPath(new Rectangle(1, 1, Math.Max(1, Width - 3), Math.Max(1, Height - 3)), CornerRadius))
             {
-                Color background = Color.FromArgb(25, 25, 25);
-                Color outlineColor = Enabled ? baseColor : Color.FromArgb(72, 72, 72);
-                Color textColor = Enabled ? baseColor : Color.FromArgb(100, 100, 100);
+                Color background = Primary && Enabled ? baseColor : Color.FromArgb(35, 37, 46);
+                Color outlineColor = Enabled ? (Primary || Focused ? baseColor : Color.FromArgb(48, 48, 59)) : Color.FromArgb(48, 48, 59);
+                Color textColor = Enabled ? Color.FromArgb(235, 240, 249) : Color.FromArgb(100, 113, 132);
                 if (hovering && Enabled) background = BlendButtonColor(background, baseColor, .08f);
                 if (pressed && Enabled)
                 {
-                    background = BlendButtonColor(Color.FromArgb(25, 25, 25), baseColor, .18f);
+                    background = BlendButtonColor(Color.FromArgb(17, 18, 22), baseColor, .18f);
                     outlineColor = BlendButtonColor(baseColor, Color.White, .25f);
                     textColor = outlineColor;
                 }
                 using (SolidBrush fill = new SolidBrush(background)) e.Graphics.FillPath(fill, path);
                 using (Pen outline = new Pen(outlineColor, 1f)) e.Graphics.DrawPath(outline, path);
                 TextRenderer.DrawText(e.Graphics, Text, Font, ClientRectangle, textColor,
-                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
             }
         }
 
@@ -3584,3 +3734,6 @@ namespace YTDownloader
         }
     }
 }
+
+
+
